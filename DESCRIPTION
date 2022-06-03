@@ -1,0 +1,39 @@
+Package: hdat9800tutorials
+Type: Package
+Title: Visualisation and Communication of Health Data (HDAT9800)
+Version: 0.1.0
+Authors@R: as.person(c(
+    "Tim Churches <timothy.churches@unsw.edu.au> [aut, cre]", 
+    "James Farrow <james@fn.com.au> [aut]",
+    "UNSW Sydney [cph]"
+  ))
+Description: This package contains interactive learnr tutorials for the course 
+    HDAT9800 Visualisation and Communication of Health Data, delivered as part of the Masters of Science in Health Data 
+    Science by the Centre for Big Data Research in Health, UNSW Sydney Faculty of Medicine & Health.
+License: file LICENSE
+Copyright: UNSW Sydney
+Imports: 
+    base,
+    ggplot2,
+    kableExtra,
+    knitr,
+    lattice,
+    learnr (>= 0.10.0),
+    magrittr,
+    rmarkdown,
+    rsconnect,
+    shiny,
+    shinydashboard,
+    tibble,
+    dplyr,
+    tidyr,
+    tidyverse,
+    utils,
+    xtable,
+    Hmisc,
+    lme4,
+    nlme,
+    datasets
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.2

@@ -1,0 +1,1049 @@
+---
+title: "Chapter 2: knitr"
+tutorial:
+  id: "au.edu.unsw.cbdrh.hdat9800.chapter2.knitr"
+  version: 1.2.4
+output:
+  learnr::tutorial:
+    progressive: false
+    css: css/tutorials.css
+runtime: shiny_prerendered
+description: "UNSW Health Data Science: literate programming with knitr"
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(dplyr)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+![](images/UNSW_2017_Big_Data_landscape.jpg){width="75%"}
+
+## Overview
+
+This tutorial looks at _Literate Programming_ using the _knitr_ package for $\textsf{R}$.
+
+_Knitr_ lets us write documents which are both
+
+  * programmes — they can perform calculations and analyses
+  * reports or scientific papers or presentations or blog posts or web sites or even whole books  — they can be something readable by humans
+  
+Mixing the two together means we finish one when we finish the other.
+No more getting to the end of the analysis and then having to face the write up.
+What we will examine here is a variant of the
+[literate programming](https://en.wikipedia.org/wiki/Literate_programming) paradigm
+introduced by [Donald Knuth](https://en.wikipedia.org/wiki/Donald_Knuth).
+
+A report that _is_ simultaneously the analysis and a document describing the analysis
+enables reproducibility and verification
+
+<span class="copyright">© Copyright 2018 UNSW Sydney. All rights reserved except where otherwise stated.</span>
+
+## Literate programming
+
+[_Literate programming_](http://www.literateprogramming.com/knuthweb.pdf)
+is a programming paradigm introduced by Donald Knuth
+in which a program is given as an explanation of the program logic in a natural language,
+such as English, interspersed with snippets of macros and traditional source code,
+from which a compilable source code can be generated.
+
+Here we will be using a variant where a document with the output of the executed code embedded
+in it is produced as the final artefact rather than a computer programme.
+
+Knuth said:
+
+> "I had the feeling that top-down and bottom-up were opposing methodologies: one more suitable for program exposition and the other more suitable for program creation. But after gaining experience with WEB, I have come to realize that there is no need to choose once and for all between top-down and bottom-up, because a program is best thought of as a web instead of a tree. A hierarchical structure is present, but the most important thing about a program is its structural relationships. A complex piece of software consists of simple parts and simple relations between those parts; the programmer's task is to state those parts and those relationships, in whatever order is best for human comprehension not in some rigidly determined order like top-down or bottom-up."
+
+In practice this manifests itself as different parts of the task informing and helping the other
+
+  * concentrating on the detail can help define what the larger task is
+  * concentrating on the task as a whole, refining as we go can lead to an understanding of what detail is necessary
+  
+In a document such as a report
+
+  * writing the code to execute the steps of an analysis can help detect inconsistencies and errors in our explanations
+  * writing explanations for our code can help clarify what we're trying to do
+  
+Having these two tasks in close proximity to one another in the document and performed
+contemporaneously allows them to reinforce and help one another.
+
+> Literate programming provides higher-quality programs, since it forces programmers to explicitly state the thoughts behind the program, making poorly thought-out design decisions more obvious. Knuth also claims that literate programming provides a first-rate documentation system, which is not an add-on, but is grown naturally in the process of exposition of one's thoughts during a program's creation. [[Wikipedia](https://en.wikipedia.org/wiki/Literate_programming#Advantages)]
+
+This approach helps us understand what we're trying to do
+and helps others understand what we're trying to do.
+Fundamentally it improves the quality of our communication.
+
+In RStudio we will be using _knitr_ to produce our communication artefacts.
+
+<div class="aside">
+### An aside...
+
+Knuth called his first implementation of this idea _WEB_.
+
+In contained a preprocessor to take the source document and produce
+the compilable programme on the one hand (_tangle_) and
+the human readable documentation on the other (_weave_).
+
+_Knitr_ is a wordplay on _weave_.
+</div>
+
+## Knitr
+
+RStudio has integrated facilities for editing
+[_Rmarkdown_](https://rmarkdown.rstudio.com/articles_intro.html) (.Rmd) files.
+
+_Rmarkdown_ is a variant of [_markdown_](https://en.wikipedia.org/wiki/Markdown),
+a lighweight text-based markup language
+[developed by John Gruber for use at daringfireball](https://daringfireball.net/projects/markdown/).
+
+_Knitr_ uses [_pandoc_](https://pandoc.org/MANUAL.html#pandocs-markdown) to
+convert the markdown text to other formats.
+
+## Working with R markdown documents in RStudio
+
+<div class="float-right">
+![](images/rstudio_new_markdown_document.png)
+</div>
+
+The _File >> New File_ menu has an option for _R markdown..._
+
+It allows use to choose different output formats:
+
+  * HTML, PDF, Word, LATEX
+  * slides
+  * even interactive documents with shiny apps embedded
+
+Choosing some of these formats may require extra R packages or other third-party software
+to be installed (although generally RStudio handles this automatically for you).
+
+## Managing R Markdown documents with git
+
+R Markdown files are plain text files and as such they are ideal for management with _git_.
+
+Don’t forget to initialise each project with _git_ either on creation or subsequently.
+If you forgot or are bringing an existing project under revision control RStudio lets
+you 'turn on' _git_ for an existing project using the _Tools >> Version Control_ menu
+or you can turn it on manually by running `git init` on the command line in the root
+folder of a project.
+
+Don't forget to commit your work regularly as necessary!
+
+## Rmd files
+
+Whereas an R script contains purely R code,
+an Rmd file is different.
+
+Parts of the document are (marked up) text for reading by a human.
+
+Parts of the document are R code for excuting by the computer.
+
+The code sections are run,
+the text sections are formatted and
+the two are 'knitted' together
+by inserting the output of the code into the formatted text to create the final document.
+
+The final document can be an HTML, PDF or even a Microsoft Word document.
+
+The markup (rmarkdown) is designed to be a simple notation
+to conveniently indicate things like bold or italic text, or heading and lists.
+As such it doesn't do everything but it does most of what is needed.
+
+Because of the choice of output formats,
+if finer control over the finished document is required it is not uncommon
+to do a first phase of document preparation in RStudio using _knitr_ and then
+transfer the produced document to _Microsoft Word_ for further editing.
+(Note that Word does not play nicely with _git_ and so there are disadvantages to this as well as advantages.)
+
+Here is a sample Rmd file
+
+```
+---
+title: "Untitled"
+author: "James Farrow"
+date: "30/07/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```
+
+The final document looks like this
+
+<div class="centre">
+![](images/knitr_document_output_sample.png){width="75%" class="bordered"}
+</div>
+
+Compare the different parts of the two documents.
+
+## Markdown
+
+Markdown is quite expressive and can be used to embed things
+like hyperlinks, images, numbered and unnumbered lists in a document.
+
+See [http://rmarkdown.rstudio.com](http://rmarkdown.rstudio.com) for more information.
+
+### Basic markup using markdown syntax
+
+Markdown is plain text with a little bit of notation to control formatting
+
+  * `*...*` or `_..._` can be used to indicate _italic_
+  * `**...**` or `__...__` can be used to indicate **bold**
+  * `# Title Text` can be used to format a heading with the text ‘Title Text’
+    * the number of ##’s indicates the heading level, start with 2
+    * the title of the document (from the metadata) is usually rendered
+      automatically as a first level heading
+  * `^...^` is used to mark up superscript text
+  * `~~...~~` is used to strike through text
+
+| Markup                         | Result                                           |
+|:-------------------------------|:-------------------------------------------------|
+| `*italic*` or `_italic_`       | _italic_                                         |
+| `**bold**` or `__bold__`       | **bold**                                         |
+| `## Heading`                   | <span style="font-size: 150%">**Heading**</span> |
+| `x^2^`                         | x^2^                                             |
+| `~~strike~~`                   | ~~strike~~                                       |
+
+### Lists
+
+Lists are formatting using `*` or `+` for _unordered lists_ (the actual symbol doesn't matter)
+and using numerical prefixes for _ordered lists._
+For ordered lists, only the first number at each level matters.
+Subsequent items at the same level will be sequentially numbered starting with the next integer.
+
+Ordered lists can also be given using alphabetical `a.` or Roman numerals labelling `i.`.
+
+```
+  * item
+  + item
+    * sub item
+```
+
+renders as
+
+<div class="output panel">
+  * item
+  + item
+    * sub item
+</div>
+
+while
+
+```
+  2. first item
+  5. second item
+     1. first sub item
+     9. second sub item
+     6. third sub item
+  0. third item
+     1) first
+     1) second
+     1) third
+```
+
+renders as
+
+<div class="output panel">
+  2. first item
+  5. second item
+     1. first sub item
+     9. second sub item
+     6. third sub item
+  0. third item
+     1) first
+     1) second
+     1) third
+</div>
+
+List styles may be mixed
+
+```
+  1. one
+  1. two
+     i. roman
+     i. roman
+     i. roman
+  1. three.
+     * unordered
+     * unordered
+```
+
+<div class="output panel">
+  1. one
+  1. two
+     i. roman
+     i. roman
+     i. roman
+  1. three.
+     * unordered
+     * unordered
+</div>
+
+### Hyperlinks
+
+Hyperlinks are marked up by enclosing the text of the anchor with `[...]`
+and following it with the link enclosed in `(...)`.
+
+The text enclosed by the `[...]` may be marked up.
+
+Thus, `[_Markdown Basics_](https://rmarkdown.rstudio.com/authoring_basics.html)` renders as
+[_Markdown Basics_](https://rmarkdown.rstudio.com/authoring_basics.html).
+
+### Images
+
+Images are included using a similar notation to hyperlinks
+
+```
+![image caption text](http://example.com/logo.png)
+```
+
+For files local to a project a file relative URL can be specified
+
+```
+![image caption text](images/logo.png)
+```
+
+So for example in this tutorial
+
+```
+![Figure: _A series of green cogs_](images/84px-Cog-scripted-svg.png)
+```
+
+renders as
+
+<div class="output panel">
+![Figure: _A series of green cogs_](images/84px-Cog-scripted-svg.png)
+</div>
+
+<div class="aside">
+### An aside...
+
+For documents being rendered to HTML, arbitrary HTML can be included in the document.
+
+If we wanted to centre the previous image we could write
+
+```
+<div style="text-align: center;">
+![Figure: _A series of green cogs_](images/84px-Cog-scripted-svg.png)
+</div>
+```
+
+which would then render as
+
+<div class="output panel">
+<div style="text-align: center;">
+![Figure: _A series of green cogs_](images/84px-Cog-scripted-svg.png)
+</div>
+</div>
+
+</div>
+
+## Equations in R Markdown
+
+A substantial subset of LaTeX equations can be used.
+See [_Mathematics in RMarkdown_](https://rpruim.github.io/s341/S19/from-class/MathinRmd.html) by R. Prium for more details on using LaTeX maths syntax.
+
+Inline equations are surrounded by `$`.
+
+```
+Let $x = \sqrt{a_i^2 - b_j^2}$ as previously.
+```
+
+renders as
+
+<div class="output panel">
+Let $x = \sqrt{a_i^2 - b_j^2}$ as previously.
+</div>
+
+Block equations are surrounded by `$$` and get centred on a new line.
+
+```
+$$ \large{ \sigma^2 = \frac { \sum_{i=1}^{n} \left( x_i - \bar{x} \right) ^ 2} {n-1} } $$
+```
+
+<div class="output panel">
+$$ \large{ \sigma^2 = \frac { \sum_{i=1}^{n} \left( x_i - \bar{x} \right) ^ 2} {n-1} } $$
+</div>
+
+Notice that the same equation is rendered more compactly inline than when stand-alone (see above):
+
+```
+This is the equation shown above rendered inline $\large{ \sigma^2 = \frac { \sum_{i=1}^{n} \left( x_i - \bar{x} \right) ^ 2} {n-1} }$, and as you can see, it is rendered more compactly -- nice!
+```
+
+<div class="output panel">
+This is the equation shown above rendered inline $\large{ \sigma^2 = \frac { \sum_{i=1}^{n} \left( x_i - \bar{x} \right) ^ 2} {n-1} }$, and as you can see, it is rendered more compactly -- nice!
+</div>
+
+Here is a quick overview of the most commonly-used LaTeX maths commands, borrowed with permission from [this excellent resource](https://rmd4sci.njtierney.com/math.html) by Nick Tierney at Monash University in Melbourne:
+
+### Fractions
+
+```
+$$
+\frac{1}{2}
+$$
+```
+
+<div class="output panel">
+$$
+\frac{1}{2}
+$$
+</div>
+
+### Subscripts
+
+```
+$$
+Y = X_1 + X_2
+$$
+```
+
+<div class="output panel">
+$$
+Y = X_1 + X_2
+$$
+</div>
+
+### Superscripts
+
+```
+$$
+a^2 + b^2 = c^2
+$$
+```
+
+<div class="output panel">
+$$
+a^2 + b^2 = c^2
+$$
+</div>
+
+### Square roots
+
+```
+$$
+\sqrt{p}
+$$
+```
+
+<div class="output panel">
+$$
+\sqrt{p}
+$$
+</div>
+
+### Combining fractions, superscripts and square roots
+
+```
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+```
+
+<div class="output panel">
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+</div>
+
+### Summation
+
+```
+$$
+\sum_{i = 1}^{n}{(\bar{x} - x_i)^2}
+$$
+```
+
+<div class="output panel">
+$$
+\sum_{i = 1}^{n}{(\bar{x} - x_i)^2}
+$$
+</div>
+
+### Bayes theorem
+
+```
+$$
+Pr(\theta | y) = \frac{Pr(y | \theta) Pr(\theta)}{Pr(y)}
+$$
+
+$$
+Pr(\theta | y) \propto Pr(y | \theta) Pr(\theta)
+$$
+```
+
+<div class="output panel">
+$$
+Pr(\theta | y) = \frac{Pr(y | \theta) Pr(\theta)}{Pr(y)}
+$$
+
+$$
+Pr(\theta | y) \propto Pr(y | \theta) Pr(\theta)
+$$
+</div>
+
+
+### A linear regression equation
+
+```
+$$
+Y \sim X\beta_0 + X\beta_1 + \epsilon
+$$
+
+$$
+\epsilon \sim N(0,\sigma^2)
+$$
+```
+
+<div class="output panel">
+$$
+Y \sim X\beta_0 + X\beta_1 + \epsilon
+$$
+
+$$
+\epsilon \sim N(0,\sigma^2)
+$$
+</div>
+
+### LaTeX equations work in Jupyter (for python) too
+
+Here is a video explaining the use of LaTeX mathematical typesetting in the Jupyter environment ofr python -- it all works the same as in R and RStudio!
+
+![](https://www.youtube.com/watch?v=5qho8zmcl9s)
+
+## Tables in R Markdown
+
+Simple, static tables can be rendered in text and will be formatted appropriately.
+Cells spanning multiple columns and/or rows are not available using this simple format.
+
+The text
+
+```
+| Markup                         | Result                                           |
+|:-------------------------------|:-------------------------------------------------|
+| `*italic*` or `_italic_`       | _italic_                                         |
+| `**bold**` or `__bold__`       | **bold**                                         |
+| `## Heading`                   | <span style="font-size: 150%">**Heading**</span> |
+| `x^2^`                         | x^2^                                             |
+| `~~strike~~`                   | ~~strike~~                                       |
+```
+
+renders as
+
+<div class="output panel">
+| Markup                         | Result                                           |
+|:-------------------------------|:-------------------------------------------------|
+| `*italic*` or `_italic_`       | _italic_                                         |
+| `**bold**` or `__bold__`       | **bold**                                         |
+| `## Heading`                   | <span style="font-size: 150%">**Heading**</span> |
+| `x^2^`                         | x^2^                                             |
+| `~~strike~~`                   | ~~strike~~                                       |
+</div>
+
+and in fact this is the markup from the first section of this document.
+
+These types of tables work well for static information but aren't ideal for dynamic data. However, you
+can insert dynamic values into tables by referencing variables (or other objects) in the R environment set up automatically by your code chunks. We'll explore that later. However, there are much more efficient ways of including tables based on data held in, say, data frames manipulated by your program code, as we will also see later.
+
+## Code literals
+
+If you want to embed code in in a markdown document without executing it, you can use  <code>\`.\..\`</code> for inline code
+and <code>\`\`\`.\..\`\`\`</code> for blocks of code.
+
+Code is usually rendered in a monospaced font and set in a different color and/or on a different background.
+
+For example
+
+```
+The `master` branch
+```
+
+renders as
+
+<div class="output panel">
+The `master` branch
+</div>
+
+while
+
+```
+```
+cube <- function(x) {
+  x^3
+}
+```
+```
+
+usually renders in an enclosed panel thus.
+
+<div class="output panel" style="padding: 0; margin-bottom: 0;">
+<pre style="border: none; background-color: white; margin-bottom: 0;">
+cube <- function(x) {
+  x^3
+}
+</pre>
+</div>
+
+The ability to include chunks of static code is useful but literate programming is all
+about the ability to include chunks of code which are _executed_.
+
+## Active code chunks
+
+The general format of an active code chunk is
+
+```
+```{r <chunk-name>, <options>}
+<programme-code>
+```
+```
+
+The `r` means this is R code and having this text here after the initial <code>\`\`\`</code>
+marks it as an active code chunk.
+
+The options control things like whether the source code gets included in the document,
+whether the code gets run and whether the output from running the code is included in the document.
+
+RStudio provides some convenient controls for code chunks on the right hand side of the edit pane.
+
+<div class="centre">
+![](images/code_chunk.png)
+</div>
+
+<div class="float-right">
+![](images/code_chunk_settings.png){width="75%"}
+</div>
+
+The first gear icon is used to control some of the settings for the chunk.
+
+The second icon runs all code chunk previous to this chunk.
+This is useful when editing a complex analysis where the setup may take a while to compute.
+The setup (all previous chunks) can be run once and then this code run multiple times while working on it.
+
+The third icon runs the code in this chunk.
+If the code follows good practice of not overwriting previous state, but rather creates new variables,
+then the code chunk can be run multiple times and have the same result.
+
+<div class="aside">
+### An aside...
+
+We call code that can be run multiple times giving the same result _idempotent_.
+
+The code
+
+```
+n <- n + 1
+```
+
+is not idempotent.
+Because it modifies one of its inputs the value of `n` will increase every time the code chunk is run.
+
+The code
+
+```
+m <- n + 1
+```
+
+is idempotent because it does not modify its inputs.
+Every time it is run `m` will have the same value, fo a given value of `n`.
+
+It is good practice to write write your R code used Rmarkdown documents in an _idempotent_ manner.
+</div>
+
+### Setting up
+
+The first chunk is usually a special chunk to set things up and is usually called something like ‘setup’)
+
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```
+
+The `include=FALSE` option says 'don't include this chunk in the final document'.
+
+The code inside the chunk sets the `echo` option default for all knitr chunks processed by _knitr_ to be `TRUE`
+meaning by default all chunks will have their output placed into the document.
+
+This saves us from putting `echo=TRUE` as an option on every chunk
+
+### Inline $\textsf{R}$ code
+
+You can also include the results of $\textsf{R}$ calculations directly into text,
+rather than as code chunk outputs.
+This is called 'inline code'.
+Place an `r` after the single backtick used to surround an inline code snippet
+similar to the way we place `{r ...}` at the start of a chunk.
+This will cause the snippet to be executed and replaced with its output.
+
+Thus, text such as
+
+```
+The 97.5% percentile for the _t_-distribution with 24 degrees of freedom is `r qt(0.975, 24)`.
+```
+
+renders as
+
+<div class="output panel">
+The 97.5% percentile for the _t_-distribution with 24 degrees of freedom is `r qt(0.975, 24)`.
+</div>
+
+The code with the inline code block can reference values and objects created in earlier code blocks --- this gives you a way to automatically insert calculated values into your text which are updated every time the code and/or the underlying data change.
+
+This works with static tables as well, of course. Notice that the vertical bars do not need to line up under each other, but there must be the same number of vertical bars in each line.
+
+The text
+
+```{r, eval=FALSE, echo=TRUE, result="asis"}
+| Distribution              | df     | 2.5% percentile | 97.5% percentile            |
+|:--------------------------|:-------|:----------------------------------------------|
+| Student _t_               | 24     | `r qt(0.025, 24)`     | `r qt(0.975, 24)`     |
+| Student _t_               | 50     | `r qt(0.025, 50)`     | `r qt(0.975, 50)`     |
+| F                         | 24,13  | `r qf(0.025, 24, 13)` | `r qf(0.975, 24, 13)` |
+| F                         | 50,23  | `r qf(0.025, 50, 23)` | `r qf(0.975, 50, 23)` |
+```
+
+renders as
+
+<div class="output panel">
+| Distribution              | df     | 2.5% percentile | 97.5% percentile            |
+|:--------------------------|:-------|:----------------------------------------------|
+| Student _t_               | 24     | `r qt(0.025, 24)`     | `r qt(0.975, 24)`     |
+| Student _t_               | 50     | `r qt(0.025, 50)`     | `r qt(0.975, 50)`     |
+| F                         | 24,13  | `r qf(0.025, 24, 13)` | `r qf(0.975, 24, 13)` |
+| F                         | 50,23  | `r qf(0.025, 50, 23)` | `r qf(0.975, 50, 23)` |
+</div>
+
+Of course, that quickly becomes tedious, and there are much better ways of rendering tabular data in documents. 
+
+One quick way of displaying a data frame in a document is by using the `kable()` function provided by `knitr`. In fact, if we just print a data frame (or tibble in tidyverse parlance) in a code chunk, `knitr` will automatically use the `kable()` function to display the data as a nicely formatted table.
+
+Let's try that with one the built-in example datasets in R, `mtcars`. If we just print it, it is automatically rendered as a nicely formatted, interactive table (in HTML output, as below):
+
+```{r mtcars}
+mtcars
+```
+
+However, that is a special behaviour because this tutorial is a `learnr` document (written in R markdown) that incorporates some additional features to make it more interactive. If we just print a data frame in an ordinary R markdown document, it will look like this when rendered by `knitr`:
+
+![](images/print_dataframe_knitr.png){width="75%"}
+
+But we can also use the `kable()` function to render it as a much nicer table in HTML:
+
+```{r mtcars-kable, eval=FALSE}
+knitr::kable(mtcars)
+```
+
+produces:
+
+![](images/kable_dataframe_knitr.png){width="75%"}
+
+There are many options available for printing data frames with `kable()`, and there is an excellent add-on package called `kableExtra` which allows you to do even more -- see [its documentation web site](https://haozhu233.github.io/kableExtra/) for details.
+
+More complex tables can be produced using the excellent `gt` package -- this works very well in R markdown documents rendered by `knitr` to either HTML or PDF output targets -- also see [its documentation web site](https://gt.rstudio.com) for details.
+
+Older mechanisms for creating tables in R, such as the `xtable()` function, also work in R markdown and `knitr`, but generally only with PDF output formats, unless some additional options are specified.
+
+
+## The code chunks as a collective programme
+
+All the code chunks in a file are effectively joined together into one long script.
+
+The chunks are run one after the other in sequence when the document is processed.
+
+Changes in state and variables created and modified by earlier chunks are visible to later chunks.
+
+For example consider the following fragment loosely based on a section of the Chapter 1 _dplyr_ tutorial
+
+```
+First we set up our data frame:
+
+```{r create-dataframe, echo=TRUE}
+df = data.frame(id=c("a", "b", "c", "d", "e"))
+```
+
+then we take a sample
+
+```{r take-sample}
+dplyr::sample_n(df, 10, replace=TRUE)
+```
+```
+
+When we run _knitr_ we get
+
+<div class="output panel">
+First we set up our data frame:
+
+```{r create-dataframe, echo=TRUE}
+df = data.frame(id=c("a", "b", "c", "d", "e"))
+```
+
+then we take a sample
+
+```{r take-sample}
+dplyr::sample_n(df, 10, replace=TRUE)
+```
+</div>
+
+Notice how the code chunks are executed and included in the document depending on the chunk settings
+and how the second chunk depends on the first chunk.
+(The first chunk sets up `df` and the second refers to it.)
+
+## More on code chunk options
+
+The definitive documentation for `knitr` code chunk options is [here](https://yihui.org/knitr/options/), far too many to cover here. We will highlight a few key ones.
+
+We have already mentioned `echo` and `include`:
+
+```
+```{r echo_on, echo=TRUE}
+a <- 3
+a^2
+```
+```
+
+renders as
+
+<div class="output panel">
+```{r echo_on, echo=TRUE}
+a <- 3
+a^2
+```
+</div>
+
+whereas
+
+```
+```{r echo_on, echo=FALSE}
+a <- 3
+a^2
+```
+```
+
+renders as
+
+<div class="output panel">
+```{r echo_off, echo=FALSE}
+a <- 3
+a^2
+```
+</div>
+
+```
+```{r include_on, include=TRUE, echo=TRUE}
+a <- 3
+a^2
+```
+```
+
+renders as
+
+<div class="output panel">
+```{r include_on, include=TRUE, echo=TRUE}
+a <- 3
+a^2
+```
+</div>
+
+whereas
+
+```
+```{r include_off, include=FALSE, echo=TRUE}
+a <- 3
+a^2
+```
+```
+
+renders as (nothing -- absolutely nothing from the chunk is included in the output)
+
+<div class="output panel">
+```{r include_off, include=FALSE, echo=TRUE}
+a <- 3
+a^2
+```
+</div>
+
+The `eval` option is also very useful -- it determines whether a code chunk is evaluated (run) or not. Thus, by setting `eval` to FALSE, you are effectively commenting that entire chunk of code out of your (literate) program.
+
+```
+```{r eval_on, eval=TRUE, include=TRUE, echo=TRUE}
+a <- 3
+a^2
+```
+```
+
+renders as
+
+<div class="output panel">
+```{r eval_on, eval=TRUE, include=TRUE, echo=TRUE}
+a <- 3
+a^2
+```
+</div>
+
+whereas
+
+```
+```{r eval_off, eval=FALSE, include=TRUE, echo=TRUE}
+a <- 3
+a^2
+```
+```
+
+renders as
+
+<div class="output panel">
+```{r eval_off, eval=FALSE, include=TRUE, echo=TRUE}
+a <- 3
+a^2
+```
+</div>
+
+Note that the options can use variables or objects you define in your R code, not just static TRUE or FALSE values (as long as those variables or objects can be interpreted as a logical data type (or as the data type expected for the option, some options expect character strings, other numeric values).
+
+Thus, if we set a value in an R code chunk, such as:
+
+```
+```{r debug_on, include=FALSE}
+debug_flag <- TRUE
+```
+```
+
+```{r debug_on, include=FALSE, echo=FALSE}
+debug_flag <- TRUE
+x <- 3
+y <- 2.78
+z <- 10^7
+```
+
+then we can use that turn debug chunks sprinkled throughout our document on or off:
+
+```
+```{r debug1, eval=debug_flag, include=debug_flag}
+cat("Debug values:")
+x
+y
+z
+```
+```
+
+will result in the following appearing in our document:
+
+<div class="output panel">
+
+```{r debug1, eval=debug_flag, include=debug_flag}
+cat("Debug values:")
+x
+y
+z
+```
+</div>
+
+whereas setting the debug flag to off, thus
+
+```
+```{r debug_off, include=FALSE}
+debug_flag <- FALSE
+```
+```
+
+```{r debug_off, include=FALSE}
+debug_flag <- FALSE
+```
+
+results in this being included in the document (nothing) for the same debugging code chunk as above:
+
+<div class="output panel">
+```{r debug1a, eval=debug_flag, include=debug_flag}
+cat("Debug values:")
+x
+y
+z
+```
+</div>
+
+Thus, using `eval` and `include` options like this, we can conditionally evaluate and include output in our document. 
+
+Quite often, your R code chunks will emit warnings or messages as well as the desired output that you wish to appear in your final, rendered (knitted) document. You can use the `warning` and `message` options to prevent such warnings and messages spoiling the look of your output. But beware, warnings and messages are usually output for a reason, and suppressing them can lead to problems. Thus it is best practice to leave them enabled (by default), and only turn them off when you are satisfied that they are innocuous and do not indicate a problem with your code or data. Turn them off on the setup chunk, as discussed above.
+
+## Cacheing
+
+`knitr` has the ability to cache the results of each chunk. _Cacheing_ means that it stores a copy of the entire R environment for each code chunk when it is first run. If the code in that code chunk has not changed since the last time it was run, then, rather than re-running all the code in that chunk, which might take quite a long time if the data are large or the code is complex, `knitr` will instead used the cached environment (and thus variable and object values) for that chunk. This can dramatically speed up the rendering of an R markdown document that involves a lot of computation or many code chunks, and is very useful when you are just finalising cosmetic changes to the document or adding explanatory text. Cacheing can, however, cause confusing errors to occur if you are changing code chunks. These types of errors are much less likely if you have written your code chunks in an _idempotent_ manner. Luckily, there is an easy solution: just disable cacheing, or use the drop-down menu in RStudio next to the Knit button (see next section) to choose the "Clear Knitr Cache" option (with the little broom icon next to it). That will _invalidate_ (delete) all the cached values for the document, ensuring that all the code chunks in it are completely re-run in the order in which they appear in the document.
+
+Also, it can be useful to only cache one or two slow code chunks, such as extracting data from a database -- cacheing can be enabled for each chunk individually if required.
+
+## Code chunk options for generated plots and graphics
+
+There are also a lot of `knitr` options for code chunks which generate plots, charts and other graphics. We will examine those in Chapter 3, when we cover `ggplot2`.
+
+## Knitr in RStudio
+
+In RStudio, R markdown documents have a 'Knit' button on the toolbar which builds the output document
+by performing the following steps.
+
+  * format the markdown
+  * run the R code
+  * join everything together into a final document
+  
+The metadata options control whether we get HTML, PDF, or Microsoft Word files as output.
+
+
+## `knitr` and R markdown for scientific and scholarly publishing
+
+There are many additional features available in the R literate programming system provided by `knitr` and R markdown to support scientific and scholarly publishing. There is an  [excellent online resource](https://rmd4sci.njtierney.com) compiled by Dr Nick Tierney at Monash University, covering topics such as internally citing or referencing tables and figures (plots, images) in your document, and how to set up and include bibliographies and reference lists, as well as a section on common problems with R markdown and `knitr`. It is strongly recommended that you read at least the common problems (Section 15) of that web site (which itself was created using `knitr` and R markdown, by the way).
+
+## Behind the scenes: how `knitr` works
+
+![Graphic courtesy of RStudio](images/rmarkdownflow.png)
+
+When you run render an R markdown document, the `render()` function feeds the .Rmd file to `knitr`, which executes all of the code chunks and creates a new markdown (.md) document which includes the code and its output.
+
+The markdown file generated by `knitr` is then processed by `pandoc` (a separate helper program called by R -- you don't really need to know much about pandoc, but if you are interested, its has a [web site](https://pandoc.org)), which is responsible for creating the finished format.
+
+This may sound complicated, but R Markdown makes it extremely simple by encapsulating all of the above processing into a single `render()` function. When you click on the _Knit_ button in RStudio, you are, in fact, calling the `render()` function behind the scenes.
+
+
+## Document preparation workflow
+
+The code and text of our document grow together, informing each other's development.
+
+Once we finish one we pretty much have finished the other since everything is bundled together.
+
+_Knitr_ runs the chunks of code like one big $\textsf{R}$ programme and inserts the output results
+(and sometimes the input code) into the document
+
+Don’t forget to use _add_ and _commit_ regularly to track your development.
+When collaborating include _push_ and _pull_ in the mix.
+
+## Summary
+
+This concludes our overview of _knitr_.
+
+More information is available online at
+
+  * [https://rmarkdown.rstudio.com](https://rmarkdown.rstudio.com)
+  * [https://rmarkdown.rstudio.com/authoring_pandoc_markdown.html](https://rmarkdown.rstudio.com/authoring_pandoc_markdown.html)
+  
+The definitive guide to literate programming with R markdown and `knitr` by Yihui Xie (the creator of `knitr`), J. J. Allaire and Garrett Grolemund is freely available at [https://bookdown.org/yihui/rmarkdown/](https://bookdown.org/yihui/rmarkdown/) (and yes, it was itself created with R markdown and `knitr`). Highly recommended for further reading.
+
