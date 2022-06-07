@@ -31,8 +31,6 @@ Imports:
     utils,
     xtable,
     Hmisc,
-    lme4,
-    nlme,
     datasets
 Encoding: UTF-8
 LazyData: true
