@@ -1,0 +1,51 @@
+.under-the-bonnet {
+  display: block;
+  border: 1px solid black;
+  padding: 0 0.5em;
+  margin-bottom: 1em;
+}
+
+.under-the-bonnet > h3::before {
+  content: " ";
+  background: url('../images/84px-Cog-scripted-svg.png') no-repeat;
+  background-size: 60px auto;
+  width: 60px;
+  height: 86px;
+  float: left;
+  margin-right: 0.5em;
+}
+
+.aside {
+  display: block;
+  border: 1px solid black;
+  padding: 0 0.5em;
+  margin-bottom: 1em;
+}
+
+.aside > h3::before {
+  content: " ";
+  background: url('../images/aside-icon.png') no-repeat;
+  background-size: 60px auto;
+  width: 60px;
+  height: 86px;
+  float: left;
+  margin-right: 0.5em;
+}
+
+.copyright {
+  color: lightgray;
+  font-size: small;
+}
+
+.centre {
+  text-align: center;
+}
+
+.float-right {
+  float: right;
+  padding-left: 1em;
+}
+
+.bordered {
+  border: 1px solid darkgray;
+}

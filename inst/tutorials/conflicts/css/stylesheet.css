@@ -1,0 +1,91 @@
+blockquote {
+  font-size: 100%;
+}
+
+.under-the-bonnet {
+  display: block;
+  border: 1px solid black;
+  padding: 0 0.5em;
+  margin-bottom: 1em;
+}
+
+.under-the-bonnet > h3::before {
+  content: " ";
+  background: url('../images/84px-Cog-scripted-svg.png') no-repeat;
+  background-size: 60px auto;
+  width: 60px;
+  height: 86px;
+  float: left;
+  margin-right: 0.5em;
+}
+
+.aside {
+  display: block;
+  border: 1px solid black;
+  padding: 0 0.5em;
+  margin-bottom: 1em;
+}
+
+.aside > h3::before {
+  content: " ";
+  background: url('../images/aside-icon.png') no-repeat;
+  background-size: 60px auto;
+  width: 60px;
+  height: 86px;
+  float: left;
+  margin-right: 0.5em;
+}
+
+.anxiety {
+  display: block;
+  border: 1px solid black;
+  padding: 0 0.5em;
+  margin-bottom: 1em;
+}
+
+.anxiety > h3::before {
+  content: " ";
+  background: url('../images/anxiety.png') no-repeat;
+  background-size: 60px auto;
+  width: 60px;
+  height: 86px;
+  float: left;
+  margin-right: 0.5em;
+}
+
+.copyright {
+  color: lightgray;
+  font-size: small;
+}
+
+.centre {
+  text-align: center;
+}
+
+.float-right {
+  float: right;
+  padding-left: 1em;
+}
+
+.bordered {
+  border: 1px solid darkgray;
+}
+
+.screenshot {
+  text-align: center;
+  margin-bottom: 1em;
+}
+
+.screenshot > p {
+  margin-bottom: 0;
+}
+
+.screenshot img {
+  padding: 1em;
+  background-color: black;
+}
+
+.warning {
+  color: red;
+  font-weight: bold;
+}

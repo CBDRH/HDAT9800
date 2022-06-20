@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+<meta name="progressive" content="false" />
+<meta name="allow-skip" content="false" />
+
+<title>Introduction to git</title>
+
+
+<!-- highlightjs -->
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+<!-- taken from https://github.com/rstudio/rmarkdown/blob/67b7f5fc779e4cfdfd0f021d3d7745b6b6e17149/inst/rmd/h/default.html#L296-L362 -->
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("section-TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+<!-- end tabsets -->
+
+
+<link rel="stylesheet" href="css/intro.css" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+<div class="pageContent band">
+<div class="bandContent page">
+
+<div class="topics">
+
+<p><img src="images/UNSW_2017_Big_Data_landscape.jpg" style="width:75.0%" /></p>
+<div id="section-overview" class="section level2">
+<h2>Overview</h2>
+<p>This tutorial looks at <em>git</em>.</p>
+<p><em>Git</em> is a version control system for tracking changes in files and coordinating work on those files among multiple people. It is primarily used for source code management in software development, but it can be used to keep track of changes in any set of files. As a distributed revision control system, it is aimed at speed, data integrity, and support for distributed, non-linear workflows. This makes it ideal for collaborative development. (See <a href="https://en.wikipedia.org/wiki/Git">Git</a> on Wikipedia and the <a href="https://git-scm.com">git website</a>.)</p>
+<p><span class="copyright">© Copyright 2018 UNSW Sydney. All rights reserved except where otherwise stated.</span></p>
+</div>
+<div id="section-revision-management" class="section level2">
+<h2>Revision management</h2>
+<p>When we work we create and destroy artefacts over time and change the relationships between them. This is obviously true for huge projects comprised of many documents and code artefacts and analysis output. It is also true for 'small' projects and tasks of just a few lines.</p>
+<p>By the end of this tutorial, you should be convinced that using a <em>revision control system</em> (like <em>git</em>) is a good idea no matter the size of your project.</p>
+<div id="section-development-is-iterative" class="section level3">
+<h3>Development is iterative</h3>
+<p>During the lifetime of a project, many artefacts will be created and destroyed. This is true whether it be preparing a software application running to millions lines of code, or a data analysis project comprising perhaps a few thousand lines of code and written material, or even preparing a textbook containing 'static' text.</p>
+<p>Creation is an <em>iterative</em> process, iteration leads to revision, revision leads to multiple versions and we want to prevent multiple versions leading to chaos.</p>
+<p>Many projects start out with good intentions and policies but use the wrong tools for the job. Manually managing revisions using the file system and an <em>ad hoc</em> naming scheme leads to chaos.</p>
+<p>A typical project has:</p>
+<ul>
+<li><em>ad hoc</em> management of files</li>
+<li>commented out chunks of old code in scripts</li>
+<li>copies of older versions ‘just in case’ typically using suffixes on files and directories
+<ul>
+<li><code>.new</code>, <code>.old</code>, <code>.orig</code>, <code>.new.old</code>, <code>.new.new</code>, <code>.new2</code></li>
+<li><code>oldproject</code>, <code>project.jun</code>, <code>project.0410</code></li>
+</ul></li>
+</ul>
+<p>This approach leads to a real mess.</p>
+</div>
+</div>
+<div id="section-revision-management-philosophy" class="section level2">
+<h2>Revision management philosophy</h2>
+<p>Using revision control systems involves shifting our thinking from managing copies of files 'beside' one another, <em>i.e.</em> renaming files and keeping a backup copy elsewhere, to instead thinking about snapshots of all our project files at points in time.</p>
+<p>It's up to us to define these 'points of interest' and they can be as frequent or infrequent as we like. We will see, however, that we need them to be 'frequent enough' but it's also possible to be 'too frequent'. There's no 'right' answer here about how often we want to take a snapshot, it depends on what we're doing, so we'll come back to this issue of 'how often' later.</p>
+<p>We can think of snapshotting like hitting 'Save' when we're editing a document. We're quite happy to do this every few minutes and it eventually becomes second nature. We will get to the point where it becomes second nature after a suitable chunk of work has been completed to describe what we've done and <em>commit</em> it to our revison control repository. We end up keeping a history of changes stretching back in time to the start of our project (or whenever we started tracking the changes).</p>
+<p>One advantage of this approach is that we can delete 'old' documents, data and code. Because we have this history the 'old' stuff is still there and we can reach back and get it at any time but we don't have to have it cluttering up our current set of working files.</p>
+<p>Our projects stays 'clean', everything is recoverable and we don't end up with 800 line documents of which only 200 lines are actually active and the rest are just commented out but kept 'just in case'.</p>
+</div>
+<div id="section-version-control-systems" class="section level2">
+<h2>Version control systems</h2>
+<p>Version control systems track changes to directories and files over time. They generally do this by keeping the state of the project and a history of changes, stored <em>seperately</em> from the current working files. This has the advantage that the files are 'just the files', there is no special embedded information to track versions. It also means there's usually a directory somehere in our project that we need to stay out of and not touch. In <em>git's</em> case this is the <code>.git</code> directory in the root folder of our project.</p>
+<p>This folder keeps a record of all our changes. Unlike some version control systems, <em>git</em> keeps an entire copy of the repository locally. To some extent all copies are equal, no one repository is more special than any other. This builds in some disaster recovery: if every copy is equal then they're all backups for one another.</p>
+<div class="centre">
+<p><img src="images/local_computer.png" /></p>
+</div>
+<p>Having a full history of a project allows previous versions to be recovered. Keeping that history in a special place means there's no need for the old versions to clutter up our working set. If we make mistakes we can 'roll back' to a good version.</p>
+<div id="section-under-the-bonnet..." class="section level3 under-the-bonnet">
+<h3>Under the bonnet...</h3>
+<p>Usually revision control systems don't actually keep every version of every file. They track the <em>changes</em> between files so you'll often see versions referred to as <em>change sets.</em> Each change set is the set of changes between the last version and the new version. When a particular version is requested the revision control system recreates the old version by taking a later version and applying the changes in reverse.</p>
+<p>Of course, this is easy with text files (and almost all programming code files are just text files). Binary data may not be so amenable to this treatement and may be managed differently.</p>
+</div>
+</div>
+<div id="section-distributed-collaboration" class="section level2">
+<h2>Distributed collaboration</h2>
+<div class="centre">
+<p><img src="images/distributed_collaboration.png" /></p>
+</div>
+<p>When we collaborate we have multiple people in multiple locations with multiple copies. This is a much more complicated situation. We have the problem that authors are making independent edits to code and content and need to share changes with one another. Sometimes this is done by having a central repository (like a shared drive). Sometimes this is done by passing a document around from author to author. Generally, without a proper revision control system, this is done badly.</p>
+<p>Common solutions typically involve having a shared document which only one person is allowed to access at a time. Getting this wrong can result in one author's work being overwritten by another and lost. Sometime documents are passed around via email. Getting this wrong can result in multiple copies being extant with no clear idea which is the most recent and resulting in a big 'merge fest' where all the extant versions need to be merged together. Shared drives and email are not the right tools for the job.</p>
+<p>By passing around changes instead of whole documents, revision control systems make it much easier to collect separate edits from separate authors together in the one file. The common case is that different authors are editing different parts of a project and such edits can be managed without conflict. The less common case, where two different authors edit the same section of the same file, is immediately identifiable and nothing gets lost because both sets of changes are available to be compared and unified.</p>
+<p>A designated central repository can act as a clearing house for these changes. Note that <em>git</em> does not need a central repository but <a href="https://githhub.com"><em>GitHub</em></a> provides a mechanism to have one with convenient associated tools like a wiki and issue tracking.</p>
+</div>
+<div id="section-snapshots-and-changesets" class="section level2">
+<h2>Snapshots and changesets</h2>
+<p>Tracking all of the versions of a project by tracking all the changes makes it easy to see who did what and when they did it. It also makes it possible to roll back to previous versions or compare different versions from different points in a project's history, <em>e.g.</em> comparing a known working past version against a current broken version to see what was changed when and by whom.</p>
+<p>If you like, you can think of the repository as a series of snapshots over time.</p>
+<div class="centre">
+<p><img src="images/commits_over_time.png" /></p>
+</div>
+<p>The repository is like a mini file-system which records all the changes made to it. Changes to the working set of files are mirrored to the repository using commands like <code>git add</code>, <code>git rm</code>, <code>git mv</code> and so on. Snapshots at particular points in time are made using <code>git commit</code> as desired.</p>
+</div>
+<div id="section-file-workflow" class="section level2">
+<h2>File workflow</h2>
+<div class="float-right">
+<p><img src="images/commit_cycle_swimlanes.png" /></p>
+</div>
+<p>The basic workflow when working with revision control is as follows:</p>
+<ul>
+<li>modify files in the local working directory</li>
+<li>stage files for addition, removal, <em>&amp;c.</em></li>
+<li>perform a commit which makes a snapshot out of the staging area</li>
+</ul>
+<p>There are two iterative cycles here</p>
+<ul>
+<li>we repeat the <em>modify and stage</em> steps multiple times before committing</li>
+<li>after a commit we return to the <em>modify and stage</em> loop</li>
+</ul>
+<p>Quite often, there is no explicit staging step. Authors make a series of edits and then after a period of time they stage and commit them in one go.</p>
+<p>Under this model, files can be in the following states:</p>
+<ul>
+<li>modified (yet to be staged)</li>
+<li>staged (yet to be committed)</li>
+<li>committed (repository up-to-date)</li>
+</ul>
+</div>
+<div id="section-adding-and-removing-files" class="section level2">
+<h2>Adding and removing files</h2>
+<p>We tell <em>git</em> that files have changes which need to be tracked using <code>git add</code>. We use the <code>git add</code> command</p>
+<ul>
+<li>when we first tell <em>git</em> that a file should be tracked for changes</li>
+<li>when we make subsequent edits to a file and need to inform <em>git</em></li>
+</ul>
+<p>We can tell <em>git</em> to no longer track a file using <code>git rm</code>.</p>
+<p>It is very important to use <code>git rm</code> rather than just remove the file from the file system. Source control is all about keeping track of changes. Tracking changes means telling <em>git</em> about those changes.</p>
+<p>If we just remove a file, <em>git</em> doesn't know it's been removed because you haven't told it. Subsequent updates will bring back the last version of the file <em>git</em> knew about.</p>
+<p>This kind of deletion is safe though and we shouldn't be afraid of it. The nice thing about having a full history of a project over time is nothing is gone forever. We can always get back previous versions of a file.</p>
+</div>
+<div id="section-checking-file-status" class="section level2">
+<h2>Checking file status</h2>
+<div class="float-right">
+<p><img src="images/file_statuses.png" /></p>
+</div>
+<p>As we add, remove, edit, stage and commit files, the status of a file will change. From time to time we need to check whether there are changes in a file that we haven't committed yet. The command <code>git status</code> shows this sort of status of files.</p>
+<p>This states correspond to changes in the files as follows:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="center">State</th>
+<th align="left">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">untracked</td>
+<td align="left"><em>git</em> is currently not tracking this file</td>
+</tr>
+<tr class="even">
+<td align="center">modified</td>
+<td align="left">there are edits which are yet to be staged</td>
+</tr>
+<tr class="odd">
+<td align="center">staged</td>
+<td align="left">there are staged changes yet to be committed</td>
+</tr>
+<tr class="even">
+<td align="center">unmodified</td>
+<td align="left">the working file, staging area and repository are all the same</td>
+</tr>
+</tbody>
+</table>
+<p>Note that since using <code>git add</code> to stage a file and <code>git commit</code> to create a snapshot are separate operations, it's possible for a file to be <em>staged</em> and <em>modified</em> at the same time, <em>i.e.</em> we made some changes, staged those changes using <code>git add</code> and then made some more changes without committing. There is nothing wrong with this situation, it sometimes happens and it can be useful when trying something out.</p>
+<p>During a commit, <em>staged</em> files are put into the repository as the next snapshot so if you don't stage changes, nothing gets committed no matter how many edits you have made.</p>
+</div>
+<div id="section-the-git-pane-in-rstudio" class="section level2">
+<h2>The git pane in RStudio</h2>
+<p>The <em>git</em> pane in RStudio is shown when we have a project open that has been configured to use <em>git</em>, <em>i.e.</em> has a <code>.git</code> directory created using <code>git init</code> either by hand or when the project was set up or initially checked out from <em>GitHub.</em></p>
+<p>In the RStudio <em>git</em> pane, the status of a file with respect to the staging area and the local repository is shown using two columns of status indicators (one for the staging area and one for the local repository)</p>
+<p>Let's look at some files in a project and go through each of the files in turn.</p>
+<div class="centre">
+<p><img src="images/rstudio_git_statuses.png" style="width:50.0%" /></p>
+</div>
+<table>
+<colgroup>
+<col width="22%" />
+<col width="77%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">File</th>
+<th>Comment</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">added_for_first_time</td>
+<td>A new file we've staged but not yet committed</td>
+</tr>
+<tr class="even">
+<td align="left">deleted</td>
+<td>A file that was in our project which we've delete (but not yet committed)</td>
+</tr>
+<tr class="odd">
+<td align="left">modified</td>
+<td>A file we've modified and not yet staged</td>
+</tr>
+<tr class="even">
+<td align="left">rename_newname</td>
+<td>A file we renamed (the new name)</td>
+</tr>
+<tr class="odd">
+<td align="left">rename_oldname</td>
+<td>A file we renamed (the old name)</td>
+</tr>
+<tr class="even">
+<td align="left">staged</td>
+<td>A file we've modifed and staged</td>
+</tr>
+<tr class="odd">
+<td align="left">untracked</td>
+<td>A file in our working directory we haven't told <em>git</em> about yet</td>
+</tr>
+</tbody>
+</table>
+<p>An unmodified file is not even listed (because there is nothing to do).</p>
+<p>Notice that <em>git</em> doesn't really know that we've renamed a file. From its point of view it looks like a deletion and then the creation of a completely new file it hasn't been told about yet.</p>
+<div class="float-right">
+<p><img src="images/rstudio_git_statuses_rename.png" width="407" /></p>
+</div>
+<p>However, it does try and detect files that have been renamed by seeing how similar they are. Files that are mostly similar will be shown as being renamed. This works quite well when files are moved and not edited at the same time (it's best to make the move/rename operation part of one commit and any edits part of another for this reason).</p>
+<p>Notice how once we schedule those files changes for a commit by adding them (checking the checkbox) it is displayed as a rename: both parts of the rename operation, the deletion of the old file and the creation of the new file, need to be part of the same commit for this to work.</p>
+<p>This pane also shows an example of a file that has been edited, staged and then edited some more before committing (<em>remodified</em>). A file that has been modified and staged, and subsequently modified again but not yet restaged is shown with a filled checkbox. Checking the checkbox would make it look exactly like the <em>staged</em> file in this example.</p>
+<p>This approach is convenient because it shows the file status at a glance. Checking a checkbox but since we can tick the box to 'commit everything' it's easy to see which files we've forgotten to stage.</p>
+<p>It also makes it really easy to see files which we've deleted and need to tell <em>git</em> about. Files deleted are indicated and by checking the checkbox and committing we can inform <em>git</em> about the deletion.</p>
+</div>
+<div id="section-committing-files" class="section level2">
+<h2>Committing files</h2>
+<p>The routine file workflow is thus very simple and not at all intrusive:</p>
+<div class="centre">
+<p><img src="images/routine_workflow.png" /></p>
+</div>
+<p>It is completely up to the author as to how often to commit. A few comments are in order, however:</p>
+<ul>
+<li>don't commit so infrequently that commits contain many different logically separate changes to a project</li>
+<li>don't commit so frequently that a single logical change is spread over multiple commits</li>
+</ul>
+<p>One good guide is 'a commit to the master branch should never leave a project in a broken state'. This means that if things are logically connected and committing them separately is a bad idea.</p>
+<p>Of course, sometimes it is necessary to work for an extended period making large scale changes to a project and we don't want to give up committing during that time but we do want to incorporate all the related changes at once. <em>Git</em> has a <em>branching</em> mechanism which provides this and we will look at it briefly later.</p>
+<div id="section-committing-in-rstudio" class="section level3">
+<h3>Committing in RStudio</h3>
+<p>There is a commit button in the <em>git</em> pane of RStudio which begins the commit process. It shows the status of files and allows you to make last minute changes to what you want to commit. It also has an area to type in a commit message.</p>
+<div class="centre">
+<p><img src="images/rstudio_commit_dialog.png" class="bordered" style="width:75.0%" /></p>
+</div>
+<p>It is important to check the result of the commit once you press the commit button.</p>
+<p>Possible results include</p>
+<ul>
+<li>everything worked fine</li>
+<li>you need to configure your name and email address for authorship purposes</li>
+<li>other file-system related errors</li>
+</ul>
+<p>As with any other operation, don't just blindly assume it works. It usually will but if you don't check you will miss things on the occasions you do need to pay attention to something.</p>
+</div>
+</div>
+<div id="section-commit-messages" class="section level2">
+<h2>Commit messages</h2>
+<p>When we commit we have to supply a message saying what is in the commit, <em>i.e.</em> what changes have been made.</p>
+<p>Commit messages are very important and it pays to put some thought into them because other people have to read them to divine the intent of the commit. One of those other people might be you in six months' time or in a year or more and you'll appreciate that you took the time to tell your future self what you were thinking.</p>
+<p>Here are some examples of some bad commit messages (all taken from real projects)</p>
+<ul>
+<li>Fixed bug</li>
+<li>Committed changes</li>
+<li>asdifhasodifuhaspdifu</li>
+</ul>
+<p>These sorts of messages do nothing to inform as to what is in the commit. 'Fixed bug' is way too general. 'Committed changes' is a useless truism. 'asdifhasodifuhaspdifu' is a wilful crime that should be prosecuted to the fullest extent of the law.</p>
+<p>Here are some examples of good commit messages:</p>
+<ul>
+<li>Bump sorting column index by one to fix a problem where the addition of the source study column meant tables were no longer sorted by descending time.</li>
+<li>Added Lesson XLVIII: §§443–452. Added colsep option to vocab. Surrounded vocab with and . Added paradigm §§760, 761. Added gda option to NounLabels.</li>
+</ul>
+<p>Each of these commit messages does something to inform and clarify the intent of the changes committed.</p>
+<p>The second example is a good commit message but a bad commit. It probably should have been broken into two or three separate commits:</p>
+<ul>
+<li>one with the new content</li>
+<li>one with changes to the vocab command</li>
+<li>possibly one with changes to NounLabels</li>
+</ul>
+<p>Although of course if these things were inextricably tied together then one commit is okay. There is no one right answer. Usually the metric is 'what will be convenient in the future?' Answering this question requires either the benefit of hindsight or experience and experience will come with usage over time.</p>
+</div>
+<div id="section-the-commit-log" class="section level2">
+<h2>The commit log</h2>
+<p>The <code>git log</code> command show us the history of commits.</p>
+<pre><code>$ git log
+commit b026324c6904b2a9cb4b88d6d61c81d16d7fce9f (HEAD -&gt; master)
+Author: James Farrow &lt;james@fn.com.au&gt;
+Date:   Fri Apr 13 18:15:22 2017 +1000
+
+[TYPES] Refactor extract.py.
+
+commit f3cb6641123c49a8b036b408a548baab47267f03
+Author: James Farrow &lt;james@fn.com.au&gt;
+Date:   Fri Apr 13 17:59:30 2017 +1000
+
+[TYPES] Add extract type facility to extract.py
+
+commit 1dcca23355272056f04fe8bf20edfce09b6252c8
+Author: James Farrow &lt;james@fn.com.au&gt;
+Date:   Fri Apr 13 16:57:46 2017 +1000
+
+Better handling of python executable and default_address.py.</code></pre>
+<div id="section-the-commit-log-in-rstudio" class="section level3">
+<h3>The commit log in RStudio</h3>
+<p>In RStudio the commit history log is accessed through the little clock icon to the left of the gear icon in the <em>git</em> pane.</p>
+<p>It displays the commit log and for each entry the differences in that commit.</p>
+<div class="centre">
+<p><img src="images/rstudio_commit_log.png" /></p>
+</div>
+</div>
+</div>
+<div id="section-naming-revisions" class="section level2">
+<h2>Naming revisions</h2>
+<p>Notice that each commit has a name. Consider it a long essentially random identifier.</p>
+<pre><code>$ git log -n 1 b026324c6904b2a9cb4b88d6d61c81d16d7fce9f
+commit b026324c6904b2a9cb4b88d6d61c81d16d7fce9f
+Author: James Farrow &lt;james@fn.com.au&gt;
+Date:   Fri Apr 13 18:15:22 2017 +1000
+
+[TYPES] Refactor extract.py.</code></pre>
+<p><em>Git</em> only requires a unique prefix to this long name when you're referring to commits so usually you’ll be using and seeing shorter references to commits like <code>b026324</code></p>
+<pre><code>$ git log -n 1 b026324
+commit b026324c6904b2a9cb4b88d6d61c81d16d7fce9f
+Author: James Farrow &lt;james@fn.com.au&gt;
+Date:   Fri Apr 13 18:15:22 2017 +1000
+[TYPES] Refactor extract.py.</code></pre>
+<p>If the name isn't unique enough, <em>git</em> will complain</p>
+<pre><code>$ git log -n 1 b02
+fatal: ambiguous argument &#39;b02&#39;: unknown revision or path not in the working tree.
+Use &#39;--&#39; to separate paths from revisions, like this:
+&#39;git &lt;command&gt; [&lt;revision&gt;...] -- [&lt;file&gt;...]&#39;</code></pre>
+<div id="section-under-the-bonnet...-1" class="section level3 under-the-bonnet">
+<h3>Under the bonnet...</h3>
+<p>A <em>git</em> commit id is actually a SHA-1 hash of important bits of information about the commit, including but not limited to:</p>
+<ul>
+<li>the full content of the commit</li>
+<li>the date of the commit</li>
+<li>the authorship information</li>
+<li>the log message</li>
+<li>ids of previous commits to get to this point</li>
+</ul>
+<p>If any of this information changes the commit id will change. There is some other information that ensures the same commit on different machines will get a different id.</p>
+<p>All of this helps to make <em>git</em> very fast and efficient when comparing repositories and change histories.</p>
+</div>
+<div id="section-revision-references" class="section level3">
+<h3>Revision references</h3>
+<p>We can of course refer to revisions by those specific long ids if we really want to but <em>git</em> gives us other, more convenient, ways to talk about revisions.</p>
+<p><code>HEAD</code> is the current revision that you’re working on.</p>
+<p>The name of a branch, <em>e.g.</em> <code>master</code> can be used to refer to the latest revision on that branch. We'll look at branches in more detail presently. The <code>master</code> branch is the branch created by default in a new repository to contain all the work.</p>
+<p><code>HEAD</code> is not always the same as the end of the master branch, <em>i.e.</em> the most recent main revision but in our case it usually will be for now.</p>
+<p>All of these references are <em>local</em> to a particular repository, <em>i.e.</em> my <code>HEAD</code> may be different to your <code>HEAD</code> because I might be working somewhere different in the repository instead of on the most recent version; if we're not up-to-date with respect to each other the end of my <code>master</code> branch could be different to the most recent entry at the end of your <code>master</code> branch.</p>
+<p>In this scenario</p>
+<div class="centre">
+<p><img src="images/commit_references.png" /></p>
+</div>
+<ul>
+<li><code>master</code> would refer to commit <code>9a0b299</code></li>
+<li><code>experimental</code> would refer to commit <code>05f2b1f</code></li>
+</ul>
+<p>This repository seems to currently be editing the end of the <code>master</code> branch so <code>HEAD</code> would be the same as master: <code>9a0b299</code></p>
+<p>The good news is you don’t really need to remember these details right now, just rest assured that <em>git</em> is more than capable of managing quite complex changes and tracking everything that has gone on.</p>
+<p>Because <em>git</em> has a picture of everything that has happened and how a document went from version A to version B it gives us great control over our documents.</p>
+</div>
+<div id="section-some-useful-notations-for-referring-to-commits" class="section level3">
+<h3>Some useful notations for referring to commits</h3>
+<p>Adding <code>^</code> to the end of a reference means 'one commit earlier' so <code>HEAD^</code> means 'the revision previous to the one I'm working on' while <code>master^</code> means 'the revision just before the latest on the master branch'.</p>
+<p>Adding <code>@{...}</code> after a reference allows time-based expressions, for example</p>
+<ul>
+<li><code>master@{yesterday}</code></li>
+<li><code>HEAD@{one month ago}</code></li>
+</ul>
+<p>Note that if your expression has a space in it you might need to surround it with quotes if you're using the command line.</p>
+<p>We can use references like these to help compare files and see what has changed.</p>
+</div>
+</div>
+<div id="section-complex-workflows" class="section level2">
+<h2>Complex workflows</h2>
+<p>Keeping a history of each file in a project allows us to do a lot of things:</p>
+<ul>
+<li>compare different versions of files</li>
+<li>return to previous working versions</li>
+<li>safely try out an approach to see if it works and rollback if not</li>
+<li>have multiple people work on a project concurrently without overwriting each other's files</li>
+</ul>
+</div>
+<div id="section-finding-differences" class="section level2">
+<h2>Finding differences</h2>
+<p>The <code>git diff</code> command shows us what has changed in a file. There are lots of ways to use <code>git diff</code> but here are some important ones. Each of these takes an optional list of files. If no files are specified then all files are compared.</p>
+<pre><code>git diff [file ...]</code></pre>
+<p>This form is to view the changes you made relative to the staging area for the next commit. In other words, the differences are what you could tell <em>git</em> to further add to the staging area but you still haven't.</p>
+<pre><code>git diff &lt;commit&gt; [--] [file ...]</code></pre>
+<p>This form is to view the changes you have in your working tree relative to the named commit. You can use <code>HEAD</code> to compare it with the latest commit, or a branch name to compare with the tip of a different branch.</p>
+<p>For example, <code>git diff HEAD functions.R</code> would compare <code>functions.R</code> to the last commit, <code>git diff HEAD@{yesterday}</code> would compare everything to how it was a day ago.</p>
+<pre><code>git diff &lt;commit&gt; &lt;commit&gt; [--] [file ...]</code></pre>
+<p>This form shows the differences between two arbitrary commits. For example, if we had two named revisions (we can <em>tag</em> revisions to give them useful names) <code>git diff v_2.0 v_2.1 functions.R</code> would show the differences between the <code>functions.R</code> file in the <code>v_2.0</code> revision and the <code>functions.R</code> file in the <code>v_2.1</code> revision.</p>
+<div id="section-viewing-diffs-in-rstudio" class="section level3">
+<h3>Viewing diffs in RStudio</h3>
+<p>There is a diff button next to the commit button in RStudio's <em>git</em> pane. It brings up a new window where one can scroll back and forth through the project history in the <em>History</em> tab. The <em>Changes</em> tab allows the differences for a particular file to be examined.</p>
+<div class="centre">
+<p><img src="images/rstudio_diff.png" /></p>
+</div>
+</div>
+</div>
+<div id="section-reverting" class="section level2">
+<h2>Reverting</h2>
+<p>The <code>git checkout</code> command lets us pull specific files out of the repository from a specific commit using</p>
+<pre><code>git checkout &lt;commit&gt; file ...</code></pre>
+<p>This pulls a specific version of a file out of the repository and replaces the current version of the file.</p>
+<div id="section-an-aside..." class="section level3 aside">
+<h3>An aside...</h3>
+<p>Note that the file name is necessary.</p>
+<p>Without a filename <code>git checkout</code> moves the entire repository to the specified commit. Since this is a previous point in time, attempts to commit to new work will give probably unexpected results. An indicator that you may have done this is a message that 'You are in "detached HEAD" state.', which is not as alarming as it sounds. If you do this by accident, running <code>git checkout master</code> (or whatever branch you are on) will return the <code>HEAD</code> to the tip of the <code>master</code> branch and work can resume.</p>
+</div>
+<p><strong>Any uncommitted work will be lost: if in doubt commit first.</strong></p>
+<p>If, for example, we found that we had completely damaged a file and wanted to go back to the way it was yesterday and throw away all our changes we could run</p>
+<pre><code>git checkout &quot;HEAD@{yesterday}&quot; helpers.R</code></pre>
+<p>Being able to revert changes makes revision control very powerful.</p>
+<p>Of course as mentioned, this only works when we have sensible commit sizes:</p>
+<ul>
+<li>too big and too many changes are lumped together which makes them hard to untangle</li>
+<li>too small and it becomes inconvenient as changes are spread over multiple commits</li>
+</ul>
+</div>
+<div id="section-branching" class="section level2">
+<h2>Branching</h2>
+<div class="float-right">
+<p><img src="images/branching.png" /></p>
+</div>
+<p>Repositories contain our 'master' copy of our project. Repositories can also contain 'experimental' versions of our projects.</p>
+<p>Sometimes we want to 'try something out'. Rather than disrupt everyone by putting our experiments into <code>master</code> (which may well break everything) we use a <em>branch</em>.</p>
+<p>The default <code>master</code> branch is where work usually occurs but different projects have different conventions:</p>
+<ul>
+<li>some projects have a <code>develop</code> branch and only put stable versions on the <code>master</code> branch</li>
+<li>some projects do all their work on the <code>master</code> branch and push stable versions to a <code>stable</code> or <code>release</code> branch</li>
+<li>some projects create and destroy branches for every new thing.</li>
+</ul>
+<p>It is a good idea to create a new branch for each release so that fixes can be made to the exact version of the project, even when research and development has moved on.</p>
+<p>Branches split off from the default ‘master’ copy initially and from each other.</p>
+<p>Weird and wonderful experimentation can take place on branches insulating the <code>master</code> version of a project from disruption and harm.</p>
+<p>Once work is complete:</p>
+<ul>
+<li>work can be folded back into the ‘master’ copy, or</li>
+<li>work can be ignored and abandoned (but not forgotten)</li>
+</ul>
+<div id="section-branch-structure" class="section level3">
+<h3>Branch structure</h3>
+<p>Branches have the same structure as the trunk from which they are spawned. In fact, at the point of branching they are identical.</p>
+<p>Branching is not taking a copy of a project and calling it <code>my_project_v2</code> and placing it in a different directory, or saving 'the important bits' of a project on an external or network drive.</p>
+<p>Instead, branching is having two versions which can be swapped back and forth at will.</p>
+<p>Keeping the same structure facilitates comparing two branches to see exactly what has changed.</p>
+</div>
+<div id="section-rstudio-commit-log-with-branches" class="section level3">
+<h3>RStudio commit log with branches</h3>
+<p>In RStudio the commit log shows branching and merges with ribbons.</p>
+<div class="centre">
+<p><img src="images/rstudio_commit_log_branches.png" /></p>
+</div>
+</div>
+<div id="section-summary" class="section level3">
+<h3>Summary</h3>
+<p>We’re not going to look at branching in any more detail but be aware that it exists.</p>
+<p>It's a powerful mechanism to make major changes to a project while isolating those changes so that they don’t affect everyone else.</p>
+<p>It's also a good mechanism to make major changes and keep them separate from your own work on the mainline project development: instead of working for days and not saving ‘because you don’t want to overwrite the original’ or saving a copy as <code>my_prog.experimental.R</code> 'to keep it separate', we can continue to work on <code>my_prog.R</code> and continue to exploit the benefits of regular commits.</p>
+</div>
+</div>
+<div id="section-remote-repositories" class="section level2">
+<h2>Remote repositories</h2>
+<p>So far we have just talked about working within a local repository.</p>
+<p>However, since we have been collecting a list of changes made to our project over time we can also 'push' and 'pull' these changes between repositories.</p>
+<p>We call repositories that aren’t the local repository <em>remote repositories</em>. Remote repositories are important for collaboration as they give us a central clearing house for changes.</p>
+<p>Often a central repository will have a web interface so that the project and revision can be viewed and managed independently of a particular local copy. They can also offer extra features like a wiki or an issue tracking system (GitHub offers both of these). They can sometimes provide permissions around who is allowed to do what with different branches, <em>e.g.</em> everyone can work on the <code>research</code> branch but only certain people can incorporate changes into the <code>published</code> branch.</p>
+<div class="float-right">
+<p><img src="images/collaborative_swimlanes.png" /></p>
+</div>
+<p>Let's revisit our file workflow with collaboration in mind.</p>
+<p>Here we can see our <em>add</em> and <em>commit</em> operations affecting our local working set, staging area and repository.</p>
+<p>We can also see that <em>checkout</em> is taking information from our local copy of the repository and <em>diff</em> is comparing local copies.</p>
+<p>New in this workflow are <em>push</em> and <em>pull</em>.</p>
+<p>The commands <code>git push</code> and <code>git pull</code> move changes between repositories and incorporate those changes into the local copy.</p>
+<p><em>Git</em> ensures that before we do a <em>push</em> operation our local repository is completely up-to-date with respect to theremote repository. If it is not it informs us that we need to <em>pull</em> before it will allow us to <em>push</em>. It does this to make sure there there are no conflicting edits that need to be resolved.</p>
+<p>Doing the <em>pull</em> first makes sure that conflicts are noticed on your machine and you get the chance to fix them. If the <em>push</em> were allowed first, conflicts would have to be recorded remotely but left to be solved later. A situation could easily arise where conflicting edit after conflicting edit are pushed to the remote repository creating a complete mess which never gets resolved.</p>
+<p>If conflicts do arise because of a <em>pull</em> operation we can (and must) fix them before moving on.</p>
+</div>
+<div id="section-conflicts" class="section level2">
+<h2>Conflicts</h2>
+<div class="float-right">
+<p><img src="images/conflicts.png" width="445" /></p>
+</div>
+<p>Fixing conflicts <em>is just like any other edit operation</em>: the aim is to leave the project in a consistent sensible state.</p>
+<p>Conflicts are indicated in the text surrounded by marker character strings <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code></p>
+<pre><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+my changes
+=======
+pulled changes
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; be2b0441bebfb70c6eef9827678bbb12f149bf4d</code></pre>
+<p>The aim is to replace this entire section with the 'correct' version. What is 'correct' is entirely up to you.</p>
+<ul>
+<li>You might decide your changes are better than the remote changes you're pulling in so you delete the markers and the second chunk of text</li>
+<li>You might decide that the remote changes are better and your changes are garbage so you keep the second chunk and delete the first</li>
+<li>You might need to incorporate changes from both, replacing the entire section</li>
+<li>You might come up with a completely new replacement that is nothing like either of them</li>
+<li>You might decide to delete both changes altogether</li>
+</ul>
+<p>There is no single right answer.</p>
+<p>To resolve the conflict, <em>edit</em>, <em>add</em> and <em>commit</em> as usual.</p>
+<p>Note that there may be more than one set of conflicts in a file. Make sure you get them all by searching for the <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> markers.</p>
+<div id="section-conflicts-in-rstudio" class="section level3">
+<h3>Conflicts in RStudio</h3>
+<p>Conflicts are indicated using an unresolved status in the <em>git</em> pane.</p>
+<div class="centre">
+<p><img src="images/rstudio_conflict.png" style="width:75.0%" /></p>
+</div>
+<p><strong>It is important not to just check the checkbox and commit.</strong></p>
+<p>This will lead to the <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> markers and the multiple copies of the code getting committed. This will in turn lead to more conflicts down the track with nested marks and not-so-hilarious results. Your colleagues will not thank you.</p>
+<p>Edit the file to fix the conflict, and then commit.</p>
+</div>
+</div>
+<div id="section-collaborative-workflow" class="section level2">
+<h2>Collaborative workflow</h2>
+<div class="float-right">
+<p><img src="images/collaborative_workflow.png" /></p>
+</div>
+<p>Our workflow now looks like this.</p>
+<p>It's still the same basic <em>edit/commit</em> cycle augmented with an occasional <em>push</em> and <em>pull</em>.</p>
+</div>
+<div id="section-activity" class="section level2">
+<h2>Activity</h2>
+<p>This is a simple exercise in adding and committing files in RStudio.</p>
+<ul>
+<li>Create a new project in RStudio and enable <em>git</em></li>
+<li>Create some new text and/or R files in the project</li>
+<li>Add them using the <em>git</em> pane</li>
+<li>Commit them with a sensible commit message</li>
+<li>Make changes to the file and commit the new changes</li>
+<li>Repeat this a few times</li>
+<li>View the history log of your project</li>
+</ul>
+<p>Some additional things to try</p>
+<ul>
+<li>Try deleting a file in the <em>Files</em> tab and then committing the deletion</li>
+<li>Try renaming a file and committing the rename</li>
+</ul>
+</div>
+<div id="section-summary-1" class="section level2">
+<h2>Summary</h2>
+<p>This concludes our overview of <em>git</em>.</p>
+<p>More good tutorials on <em>git</em> are available online:</p>
+<ul>
+<li>The <a href="https://git-scm.com/doc"><em>git</em> website</a></li>
+<li><a href="https://www.atlassian.com/git">Atlassian</a> (aimed at <em>BitBucket</em> rather than <em>GitHub</em> but still useful) 
+<script type="application/shiny-prerendered" data-context="server-start">
+library(learnr)
+knitr::opts_chunk$set(echo = FALSE)
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::register_http_handlers(session, metadata = list(id = "au.edu.unsw.cbdrh.intro_to_git", version = "0.1.2"))
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+session$onSessionEnded(function() {
+        learnr:::session_stop_event(session)
+      })
+</script>
+ <!--html_preserve-->
+<script type="application/shiny-prerendered" data-context="dependencies">
+{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["header-attrs"]},{"type":"character","attributes":{},"value":["2.8"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/pandoc"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["header-attrs.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.8"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["1.11.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/jquery"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.8"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.3.5"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","shim/html5shiv.min.js","shim/respond.min.js"]},{"type":"character","attributes":{},"value":["css/cerulean.min.css"]},{"type":"character","attributes":{},"value":["<style>h1 {font-size: 34px;}\n       h1.title {font-size: 38px;}\n       h2 {font-size: 30px;}\n       h3 {font-size: 24px;}\n       h4 {font-size: 18px;}\n       h5 {font-size: 16px;}\n       h6 {font-size: 12px;}\n       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}\n       pre:not([class]) { background-color: white }<\/style>"]},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.8"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["pagedtable"]},{"type":"character","attributes":{},"value":["1.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/pagedtable-1.1"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/pagedtable.js"]},{"type":"character","attributes":{},"value":["css/pagedtable.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.8"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["highlightjs"]},{"type":"character","attributes":{},"value":["9.12.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/highlightjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["highlight.js"]},{"type":"character","attributes":{},"value":["textmate.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.8"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial.js"]},{"type":"character","attributes":{},"value":["tutorial.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-autocompletion"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-autocompletion.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-diagnostics"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-diagnostics.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-format"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmarkdown/templates/tutorial/resources"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-format.js"]},{"type":"character","attributes":{},"value":["tutorial-format.css","rstudio-theme.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["1.11.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/jquery"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.8"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["navigation"]},{"type":"character","attributes":{},"value":["1.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/navigation-1.1"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tabsets.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.8"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["highlightjs"]},{"type":"character","attributes":{},"value":["9.12.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/highlightjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["highlight.js"]},{"type":"character","attributes":{},"value":["default.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.8"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["1.11.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/jquery"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.8"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["font-awesome"]},{"type":"character","attributes":{},"value":["5.1.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/fontawesome"]}]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["css/all.css","css/v4-shims.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.8"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootbox"]},{"type":"character","attributes":{},"value":["4.4.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/bootbox"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["bootbox.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["idb-keyvalue"]},{"type":"character","attributes":{},"value":["3.2.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/idb-keyval"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["idb-keyval-iife-compat.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[false]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial.js"]},{"type":"character","attributes":{},"value":["tutorial.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-autocompletion"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-autocompletion.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-diagnostics"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-diagnostics.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]}]}
+</script>
+<!--/html_preserve-->
+<!--html_preserve-->
+<script type="application/shiny-prerendered" data-context="execution_dependencies">
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]}},"value":[{"type":"character","attributes":{},"value":["base","bslib","compiler","datasets","digest","ellipsis","evaluate","fastmap","graphics","grDevices","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","learnr","lifecycle","magrittr","markdown","methods","mime","promises","R6","Rcpp","rlang","rmarkdown","rprojroot","sass","shiny","stats","stringi","stringr","tools","utils","withr","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["3.6.2","0.2.5.1","3.6.2","3.6.2","0.6.27","0.3.2","0.14","1.1.0","3.6.2","3.6.2","0.5.1.1","1.5.3","1.6.1","0.1.4","1.7.2","1.33","1.2.0","0.10.1","1.0.0","2.0.1","1.1","3.6.2","0.10","1.2.0.1","2.5.0","1.0.6","0.4.11","2.8","2.0.2","0.4.0","1.6.0","3.6.2","1.6.2","1.4.0","3.6.2","3.6.2","2.4.2","0.23","1.8-4","2.2.1"]}]}]}
+</script>
+<!--/html_preserve--></li>
+</ul>
+</div>
+
+</div> <!-- topics -->
+
+<div class="topicsContainer">
+<div class="topicsPositioner">
+<div class="band">
+<div class="bandContent topicsListContainer">
+
+<!-- begin doc-metadata -->
+<div id="doc-metadata">
+<h2 class="title toc-ignore" style="display:none;">Introduction to git</h2>
+</div>
+<!-- end doc-metadata -->
+
+</div> <!-- bandContent.topicsListContainer -->
+</div> <!-- band -->
+</div> <!-- topicsPositioner -->
+</div> <!-- topicsContainer -->
+
+
+</div> <!-- bandContent page -->
+</div> <!-- pageContent band -->
+
+
+
+
+<script>
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+
+</body>
+
+</html>
