@@ -2,13 +2,13 @@
 title: "Chapter 6: Shiny"
 tutorial:
   id: "au.edu.unsw.cbdrh.hdat9800.chapter6.shiny"
-  version: 1.5
+  version: 1.6
 output:
   learnr::tutorial:
     progressive: false
     css: css/tutorials.css
 runtime: shiny_prerendered
-description: "UNSW Health Data Science: collaboration using git and GitHub"
+description: "UNSW Health Data Science: introduction to shiny"
 ---
 
 ```{r setup, include=FALSE}
