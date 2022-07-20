@@ -1,0 +1,13 @@
+name: HDAT9800_categorical
+title: HDAT9800_categorical
+username:
+account: cbdrh
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6666556
+bundleId: 6114181
+url: https://cbdrh.shinyapps.io/HDAT9800_categorical/
+when: 1658289007.81612
+lastSyncTime: 1658289007.81612
+asMultiple: FALSE
+asStatic: FALSE

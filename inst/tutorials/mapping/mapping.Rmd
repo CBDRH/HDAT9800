@@ -1,0 +1,635 @@
+---
+title: "Chapter 7: Interactive Mapping with Shiny"
+tutorial:
+  id: "au.edu.unsw.cbdrh.hdat9800.chapter7.mapping"
+  version: 1.1.0
+output:
+  learnr::tutorial:
+    progressive: false
+    css: css/tutorials.css
+runtime: shiny_prerendered
+description: "UNSW Health Data Science: interactive mapping with leaflet and shiny"
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+knitr::opts_chunk$set(echo = FALSE)
+library(leaflet)
+library(rgdal)
+library(dplyr)
+
+my.package <- 'hdat9800tutorials'
+```
+
+![](images/UNSW_2017_Big_Data_landscape.jpg){width="75%"}
+
+## Overview
+
+This tutorial discusses how to use leaflet in a Shiny application.
+
+<span class="copyright">© Copyright 2018, 2021, 2022 UNSW Sydney. All rights reserved except where otherwise stated.</span>
+
+## Introduction
+
+We are going to look at a very basic interactive map-based application using shiny and leaflet.
+
+To begin with we'll just display a single polygon and give some control over it using a shiny input.
+
+A leaflet/shiny application is just like any other shiny application:
+
+ * the user changes some inputs
+ * the server back-end recalculates some outputs
+ * the UI displays the changed outputs
+ 
+we're just doing it with maps as well. &#x1F601;
+
+## Shiny-related leaflet functions
+
+The _leaflet_ package gives us some functions to integrate with Shiny:
+
+ * `renderLeaflet` — on the server side
+ * `leafletOutput` — on the UI side
+
+You should recognise these as being analogous to `renderPlot` and `plotOutput` for displaying plots in a Shiny application.
+
+In addition to these functions, existing Shiny functions are useful with _leaflet_,
+for example `actionButton` can be useful to trigger a calculation or update.
+
+## A basic application
+
+Let's construct a basic application which will display a polygon.
+We won't concern ourselves with Shiny interactivity at first.
+Note, however, some interactively is already built into a _leaflet_ output element
+such as the ability to move the map around and zoom in and out.
+We do not need to do anything extra in our Shiny application to enable this.
+
+Let's construct a server which will simply return a _leaflet_ map with a single polygon highlighted.
+We'll select one of the 2016 Commonwealth Electoral Districts and use its boundary.
+
+Notice that because these boundaries never change or move over the lifetime of our application running,
+we do this once only outside the server function.
+We certainly don't want to do it inside the closure for `output$basic.map` because that would mean
+every time the map output changed as a result of changed input,
+_all_ the data files would get reloaded.
+Besides introducing unnecessary computation into our application,
+since they're quite large that would take a while and it would introduce a long delay into the response time
+and decrease the interactivity of our application.
+
+<div class="under-the-bonnet">
+### Under the bonnet...
+
+It's important to put code like this in the right place.
+In the Shiny server architecture there are three places where it can be placed
+and it will be run at different times over the lifetime of the application:
+
+```
+# outside the server function
+
+server <- function(input, output) {
+
+  # inside the server function but outside a closure for any specific output
+  
+  output$map <- renderLeaflet({
+    # inside the closure calculating the value of an output
+  })
+}
+```
+
+Code outside the server function is run once when the server back-end is started with `runApp()`. Code here is run _once per application._
+
+Code inside the server function but outside a closure for any specific output is run when a user visits the app for the first time. Code here is run _once for each user._
+
+Code inside output closures is run every time an output is recalculated. Code here is run _once per change, possibly even many times a second._
+
+It pays to think about where to put code and how often it needs to be executed.
+</div>
+
+The census data files have an id column `CED_CODE_2016` of the form `CEDxxx` where `xxx` is a numeric id.
+The shape data has an id column `CED_CODE16` of the form `xxx`, _i.e._ without the `CED` prefix.
+
+We need to take this into account when selecting by id.
+The easiest thing to do is to add a `CED_CODE_2016` column to the shape data.
+
+Here is our server code:
+
+```
+my.package <- packageName()
+
+# a utility function for calculating filenames included with our tutorial package
+packageFile <- function(filename) {
+  # look for filename in the extdata directory of our package 
+  system.file("extdata", filename, package=my.package)
+}
+
+# read in the CED info data
+CED_info_file <- packageFile("CED_2016_AUST.csv")
+CED_info <- read.csv(CED_info_file)
+CED_info <- CED_info %>%
+  mutate(CED_CODE_2016 = paste0("CED", CED_info$CED_CODE_2016))
+
+# read in the CED polygons and add CED code column
+CED_polys_file <- packageFile("CED_2016_AUST.shp")
+CED_polys <- rgdal::readOGR(CED_polys_file)
+CED_polys$CED_CODE_2016 <- paste0("CED", CED_polys$CED_CODE16)
+
+# just select one polygon with id CED101 (Banks)
+
+CED_poly <- CED_polys[CED_polys$CED_CODE_2016 == "CED101"]
+
+server <- function(input, output) {
+  output$basic.map <- renderLeaflet({
+    m <- leaflet() %>%
+            addTiles() %>%
+            addPolygons(data=CED_poly)
+    m
+  })
+}
+```
+```{r basic.map-setup, context="setup"}
+# a utility function for calculating filenames included with our tutorial package
+packageFile <- function(filename) {
+  # look for filename in the extdata directory of our package 
+  system.file("extdata", filename, package=my.package)
+}
+
+# read in the CED info data
+CED_info_file <- packageFile("CED_2016_AUST.csv")
+CED_info <- read.csv(CED_info_file)
+CED_info <- CED_info %>%
+  mutate(CED_CODE_2016 = paste0("CED", CED_info$CED_CODE_2016))
+
+# read in the CED polygons and add CED code column
+CED_polys_file <- packageFile("CED_2016_AUST.shp")
+CED_polys <- rgdal::readOGR(CED_polys_file)
+CED_polys$CED_CODE_2016 <- factor(paste0("CED", CED_polys$CED_CODE16))
+
+# just select one polygon with id CED101 (Banks)
+
+CED_poly <- CED_polys[CED_polys$CED_CODE_2016 == "CED101",]
+```
+```{r basic.map-server, context="server"}
+output$basic.map <- renderLeaflet({
+  m <- leaflet() %>%
+          addTiles() %>%
+          addPolygons(data=CED_poly)
+  m
+})
+```
+
+We've taken the approach here of constructing our leaflet map object and assigning it to `m` and returning `m`
+(rather than just doing it all in one step)
+because later we'll see that it gives us the chance to do extra things with `m` before returning it
+such as responding to different inputs!
+
+Here is our UI code:
+
+<div class="bordered-container-fluid">
+```{r basic-map-ui, echo=TRUE}
+fluidPage(
+  leafletOutput("basic.map")
+)
+```
+</div>
+
+We have added no addition Shiny input widgets but leaflet provides its own controls for zooming and panning.
+(Leaflet does provide ways to detect if the user zooms or pans the map but we won't be using them here.)
+
+## Refining the application
+
+Let's refine our application: let's add a control to change the colour of the polygon.
+
+<div class="under-the-bonnet">
+### Under the bonnet..
+
+Notice that we've change the name of the application inputs and outputs.
+This is because all of these examples are actually running as part of a single shiny application (this _learnr_ tutorial!)
+and so we need to keep all of these examples separate.
+
+It's always a good idea to give things descriptive names anyway rather than just `my_map` and `colour`.
+</div>
+
+We need an input to select the colour and we need to change the output closure to use it.
+
+We won't bother reloading the data files here because we've already done it once _outside_ our server function definition
+and so we don't need to do it again. They haven't changed.
+
+Here is our server code:
+```
+server <- function(input, output) {
+  output$responsive.map <- renderLeaflet({
+    m <- leaflet() %>%
+            addTiles() %>%
+            addPolygons(data=CED_poly,
+                        weight=2,
+                        color=input$responsive.map.colour)
+    m
+  })
+}
+```
+```{r responsive.map-server, context="server"}
+output$responsive.map <- renderLeaflet({
+  m <- leaflet() %>%
+          addTiles() %>%
+          addPolygons(data=CED_poly,
+                      weight=2,
+                      color=input$responsive.map.colour)
+  m
+})
+```
+
+And here are the UI elements:
+
+<div class="bordered-container-fluid">
+```{r responsive.map-ui, echo=TRUE}
+colours <- c("Blue"="blue", "Red"="red", "Yellow"="yellow", "Green"="green")
+fluidPage(
+  leafletOutput("responsive.map"),
+  selectInput("responsive.map.colour", label="Polygon colour:", choices=colours, selected=colours[0])
+)
+```
+</div>
+
+Notice how the entire map is redrawn when the input changes.
+This is because a completely new leaflet map object is created when the input changes.
+It's functional but we'll see how to remove this flicker later and make our application snappier in the process.
+
+## Conditional map processing
+
+Let's add markers for the railway stations.
+We'll add a check-box to show/hide the markers and introduce some conditional code in the output closure.
+
+Here is our server code. Notice how we have taken advantage of the map being in `m` to conditionally add markers.
+
+```
+# read in our station data (names, latitudes and longitudes)
+stations_data_file <- packageFile("stations_data.csv")
+stations_data <- read.csv(stations_data_file)
+
+server <- function(input, output) {
+  output$conditional.map <- renderLeaflet({
+    m <- leaflet() %>%
+            addTiles() %>%
+            addPolygons(data=CED_poly,
+                        weight=2,
+                        color=input$conditional.map.colour)
+    if (input$conditional.map.markers) {
+      m <- m %>% addMarkers(data=stations_data)
+    }
+    m
+  })
+}
+```
+```{r conditional.map-setup, context="setup"}
+# read in our station data (names, latitudes and longitudes)
+stations_data_file <- packageFile("stations_data.csv")
+stations_data <- read.csv(stations_data_file)
+```
+```{r conditional.map-server, context="server"}
+output$conditional.map <- renderLeaflet({
+  m <- leaflet() %>%
+          addTiles() %>%
+          addPolygons(data=CED_poly,
+                      weight=2,
+                      color=input$conditional.map.colour)
+  if (input$conditional.map.markers) {
+    m <- m %>% addMarkers(data=stations_data)
+  }
+  m
+})
+```
+
+And here are the UI elements:
+
+<div class="bordered-container-fluid">
+```{r conditional.map-ui, echo=TRUE}
+colours <- c("Blue"="blue", "Red"="red", "Yellow"="yellow", "Green"="green")
+fluidPage(
+  leafletOutput("conditional.map"),
+  selectInput("conditional.map.colour", label="Polygon colour:", choices=colours, selected=colours[0]),
+  checkboxInput("conditional.map.markers", label="Show stations")
+)
+```
+</div>
+
+## Map proxies
+
+So far we have regenerated the map when inputs change.
+While this generates the correct output it's not very aesthetic (it flickers)
+or efficient (it involves a lot of extra unnecessary work).
+
+Leaflet provides a `leafletProxy` function which _updates_ an existing map without redrawing everything.
+
+With this approach, we create the map once and update using a `leafletProxy()` object when things change.
+
+Notice we create `the.map` once in a default configuration (we know because of the way we have set up the UI
+that it will start with a blue polygon and no markers).
+
+The `observe()` function takes a closure which will get run when one of its dependencies (inputs) changes.
+It's just like an output closure except its result isn't used.
+It's only run for its side-effects, in this case, updating the map.
+
+```
+the.map <- leaflet() %>%
+              addTiles() %>%
+              addPolygons(data=CED_poly,
+                          weight=2,
+                          color="blue",
+                          group="CEDs")
+
+server <- function(input, output) {
+  output$efficient.map <- renderLeaflet({the.map})
+  
+  # whenever the efficient.map.markers input changes, update the markers
+  observe({
+    if (input$efficient.map.markers) {
+      leafletProxy("efficient.map") %>% addMarkers(data=stations_data, group="stations")
+    } else {
+      leafletProxy("efficient.map") %>% clearGroup("stations")  
+    }
+  })
+  
+  # whenever the input$efficient.map.colour changes, update the polygon
+  observe({
+    leafletProxy("efficient.map") %>%
+      clearGroup("CEDs") %>%
+      addPolygons(data=CED_poly,
+                  weight=2,
+                  color=input$efficient.map.colour,
+                  group="CEDs")
+  })
+}
+```
+```{r efficient.map-setup, context="setup"}
+efficient.map <- leaflet() %>%
+                    addTiles() %>%
+                    addPolygons(data=CED_poly,
+                                weight=2,
+                                color="blue",
+                                group="CEDs")
+```
+```{r efficient.map-server, context="server"}
+output$efficient.map <- renderLeaflet({efficient.map})
+
+observe({
+  if (input$efficient.map.markers) {
+    leafletProxy("efficient.map") %>% addMarkers(data=stations_data, group="stations")
+  } else {
+    leafletProxy("efficient.map") %>% clearGroup("stations")  
+  }
+})
+
+observe({
+  leafletProxy("efficient.map") %>%
+    clearGroup("CEDs") %>%
+    addPolygons(data=CED_poly,
+                weight=2,
+                color=input$efficient.map.colour,
+                group="CEDs")
+})
+```
+
+And here are the UI elements:
+
+<div class="bordered-container-fluid">
+```{r efficient.map-ui, echo=TRUE}
+colours <- c("Blue"="blue", "Red"="red", "Yellow"="yellow", "Green"="green")
+fluidPage(
+  titlePanel("Example using leafletProxy"),
+  sidebarPanel(
+    selectInput("efficient.map.colour", label="Polygon colour:", choices=colours, selected=colours[0]),
+    checkboxInput("efficient.map.markers", label="Show stations")
+  ),
+  mainPanel(
+    leafletOutput("efficient.map")
+  )
+)
+```
+</div>
+
+## More interesting maps
+
+Finally, lets look an an example of a map which visualises something interesting about a few electorates.
+We'll select a group of electorates (around the one we've already been looking at)
+and colour them according to various aspects of median weekly rent:
+
+ * by absolute value
+ * by different from the national median
+
+Information here can be downloaded from the 
+[Census Data Packs page](https://datapacks.censusdata.abs.gov.au/datapacks/)
+on the ABS website.
+
+```
+# read in national aggregate and CED median data from the 2016 Census
+AUST_median_info_file = packageFile("2016Census_P02_AUS.csv")
+AUST_median_info <- read.csv(AUST_median_info_file)
+CED_median_info_file <- packageFile("2016Census_P02_AUS_CED.csv")
+CED_median_info <- read.csv(CED_median_info_file)
+
+# Let's find the national Median_rent_weekly
+AUST_Median_rent_weekly <- AUST_median_info$Median_rent_weekly[1]
+
+# select the polygons we're interested in
+# leaving out Sydney because it includes Lord Howe Island and that causes problems with the
+# map bounding box we don't really want to deal with just yet
+CED_names <- c("Banks", "Barton", "Cook", "Hughes", "Kingsford Smith", "Wentworth", "Sydney",
+              "Grayndler", "Watson", "Reid", "Blaxland", "Fowler", "McMahon", "Parramatta",
+              "Bennelong", "North Sydney", "Warringah", "Werriwa")
+CED_codes <- unique(CED_info %>% filter(CED_NAME_2016 %in% CED_names) %>% select(CED_CODE_2016))$CED_CODE_2016
+median_polys <- CED_polys[CED_polys$CED_CODE_2016 %in% CED_codes,]
+median_polys@data <- median_polys@data %>% left_join(CED_median_info, 'CED_CODE_2016')
+median_polys@data$Median_rent_weekly_diff = median_polys@data$Median_rent_weekly - AUST_Median_rent_weekly
+
+# Let's find the maximum and minimum Median_rent_weekly for the CEDs we've selected
+CED_max_Median_rent_weekly <- max(median_polys@data$Median_rent_weekly)
+CED_min_Median_rent_weekly <- min(median_polys@data$Median_rent_weekly)
+
+# Let's also find the maximum difference from the national median
+AUST_max_Median_rent_weekly_diff <- max(
+  abs(CED_max_Median_rent_weekly - AUST_Median_rent_weekly),
+  abs(CED_min_Median_rent_weekly - AUST_Median_rent_weekly)
+)
+
+# from these we'll make two colour palettes: for the absolute scale and for the difference scale
+absolute_palette <- colorNumeric(c("red", "blue"),
+                                c(CED_min_Median_rent_weekly, CED_max_Median_rent_weekly))
+difference_palette <- colorNumeric(c("red", "yellow", "blue"),
+                                  c(-AUST_max_Median_rent_weekly_diff, AUST_max_Median_rent_weekly_diff))
+
+visualisation.map <- leaflet() %>%
+                        addTiles() %>%
+                        addPolygons(data=median_polys,
+                                    color="black",
+                                    weight=1,
+                                    fillOpacity=0.55,
+                                    fillColor=absolute_palette(median_polys$Median_rent_weekly),
+                                    group="CEDs") %>%
+                        addLegend("bottomleft", pal=absolute_palette,
+                                  values=seq(CED_min_Median_rent_weekly, CED_max_Median_rent_weekly),
+                                  labFormat=labelFormat(prefix='$'),
+                                  title="Median weekly rent",
+                                  opacity=1) %>%
+                        fitBounds(150.76538, -34.17233, 151.30760, -33.75125)
+
+server <- function(input, output) {
+  output$visualisation.map <- renderLeaflet({visualisation.map})
+  
+  observe({
+    if (input$visualisation.map.colour.type == "absolute") {
+      leafletProxy("visualisation.map") %>%
+        clearGroup("CEDs") %>%
+        clearControls() %>%
+        addPolygons(data=median_polys,
+                    color="black",
+                    weight=1,
+                    fillOpacity=0.55,
+                    fillColor=absolute_palette(median_polys$Median_rent_weekly),
+                    group="CEDs") %>%
+        addLegend("bottomleft", pal=absolute_palette,
+                  values=seq(CED_min_Median_rent_weekly, CED_max_Median_rent_weekly),
+                  labFormat=labelFormat(prefix='$'),
+                  title="Median weekly rent",
+                  opacity=1)
+    } else {
+      leafletProxy("visualisation.map") %>%
+        clearGroup("CEDs") %>%
+        clearControls() %>%
+        addPolygons(data=median_polys,
+                    color="black",
+                    weight=1,
+                    fillOpacity=0.55,
+                    fillColor=difference_palette(median_polys$Median_rent_weekly_diff),
+                    group="CEDs") %>%
+        addLegend("bottomleft", pal=difference_palette,
+                  values=seq(-AUST_max_Median_rent_weekly_diff, AUST_max_Median_rent_weekly_diff),
+                  labFormat=labelFormat(prefix='$'),
+                  title="Difference from national median",
+                  opacity=1)
+    }
+  })
+}
+```
+
+```{r visualisation.map-setup, context="setup"}
+# read in national aggregate and CED median data from the 2016 Census
+AUST_median_info_file = packageFile("2016Census_P02_AUS.csv")
+AUST_median_info <- read.csv(AUST_median_info_file)
+CED_median_info_file <- packageFile("2016Census_P02_AUS_CED.csv")
+CED_median_info <- read.csv(CED_median_info_file)
+
+# Let's find the national Median_rent_weekly
+AUST_Median_rent_weekly <- AUST_median_info$Median_rent_weekly[1]
+
+# select the polygons we're interested in
+# leaving out Sydney because it includes Lord Howe Island and that causes problems with the
+# map bounding box we don't really want to deal with just yet
+CED_names <- c("Banks", "Barton", "Cook", "Hughes", "Kingsford Smith", "Wentworth", "Sydney",
+              "Grayndler", "Watson", "Reid", "Blaxland", "Fowler", "McMahon", "Parramatta",
+              "Bennelong", "North Sydney", "Warringah", "Werriwa")
+CED_codes <- unique(CED_info %>% filter(CED_NAME_2016 %in% CED_names) %>% select(CED_CODE_2016))$CED_CODE_2016
+median_polys <- CED_polys[CED_polys$CED_CODE_2016 %in% CED_codes,]
+median_polys@data <- median_polys@data %>% left_join(CED_median_info, 'CED_CODE_2016')
+median_polys@data$Median_rent_weekly_diff = median_polys@data$Median_rent_weekly - AUST_Median_rent_weekly
+
+# Let's find the maximum and minimum Median_rent_weekly for the CEDs we've selected
+CED_max_Median_rent_weekly <- max(median_polys@data$Median_rent_weekly)
+CED_min_Median_rent_weekly <- min(median_polys@data$Median_rent_weekly)
+
+# Let's also find the maximum difference from the national median
+AUST_max_Median_rent_weekly_diff <- max(
+  abs(CED_max_Median_rent_weekly - AUST_Median_rent_weekly),
+  abs(CED_min_Median_rent_weekly - AUST_Median_rent_weekly)
+)
+
+# from these we'll make two colour palettes: for the absolute scale and for the difference scale
+absolute_palette <- colorNumeric(c("red", "blue"),
+                                c(CED_min_Median_rent_weekly, CED_max_Median_rent_weekly))
+difference_palette <- colorNumeric(c("red", "yellow", "blue"),
+                                  c(-AUST_max_Median_rent_weekly_diff, AUST_max_Median_rent_weekly_diff))
+
+visualisation.map <- leaflet() %>%
+                        addTiles() %>%
+                        addPolygons(data=median_polys,
+                                    color="black",
+                                    weight=1,
+                                    fillOpacity=0.55,
+                                    fillColor=absolute_palette(median_polys$Median_rent_weekly),
+                                    group="CEDs") %>%
+                        addLegend("bottomleft", pal=absolute_palette,
+                                  values=seq(CED_min_Median_rent_weekly, CED_max_Median_rent_weekly),
+                                  labFormat=labelFormat(prefix='$'),
+                                  title="Median weekly rent",
+                                  opacity=1) %>%
+                        fitBounds(150.76538, -34.17233, 151.30760, -33.75125)
+```
+```{r visualisation.map-server, context="server"}
+output$visualisation.map <- renderLeaflet({visualisation.map})
+
+observe({
+  if (input$visualisation.map.colour.type == "absolute") {
+    leafletProxy("visualisation.map") %>%
+      clearGroup("CEDs") %>%
+      clearControls() %>%
+      addPolygons(data=median_polys,
+                  color="black",
+                  weight=1,
+                  fillOpacity=0.55,
+                  fillColor=absolute_palette(median_polys$Median_rent_weekly),
+                  group="CEDs") %>%
+      addLegend("bottomleft", pal=absolute_palette,
+                values=seq(CED_min_Median_rent_weekly, CED_max_Median_rent_weekly),
+                labFormat=labelFormat(prefix='$'),
+                title="Median weekly rent",
+                opacity=1)
+  } else {
+    leafletProxy("visualisation.map") %>%
+      clearGroup("CEDs") %>%
+      clearControls() %>%
+      addPolygons(data=median_polys,
+                  color="black",
+                  weight=1,
+                  fillOpacity=0.55,
+                  fillColor=difference_palette(median_polys$Median_rent_weekly_diff),
+                  group="CEDs") %>%
+      addLegend("bottomleft", pal=difference_palette,
+                values=seq(-AUST_max_Median_rent_weekly_diff, AUST_max_Median_rent_weekly_diff),
+                labFormat=labelFormat(prefix='$'),
+                title="Difference from national median",
+                opacity=1)
+  }
+})
+```
+
+And our UI:
+
+<div class="bordered-container-fluid">
+```{r visualisation.map-ui, echo=TRUE}
+colours <- c("Blue"="blue", "Red"="red", "Yellow"="yellow", "Green"="green")
+fluidPage(
+  titlePanel("Example visualisation of "),
+  sidebarPanel(
+    radioButtons("visualisation.map.colour.type", "Map type",
+                 choices = c("Median weekly rent"="absolute",
+                             "Difference from national median"="difference"))
+  ),
+  mainPanel(
+    leafletOutput("visualisation.map")
+  )
+)
+```
+</div>
+
+&nbsp;
+<div class="aside">
+### Aside...
+
+Leaflet will also let us put controls on a map to control things like the visibility of groups and layers
+so we don't have to do so much work.
+
+Under that approach we add everything to the map but set some things to be hidden
+and then show/hide things selectively.
+</div>
+
+## Summary
+
+This concludes our tutorial on interactive mapping with shiny and leaflet.
