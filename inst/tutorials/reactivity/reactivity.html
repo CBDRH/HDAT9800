@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+<meta name="progressive" content="true" />
+<meta name="allow-skip" content="false" />
+
+<title>Chapters 8 &amp; 9: Reactivity in Shiny</title>
+
+<!-- HEAD_CONTENT -->
+
+<!-- highlightjs -->
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+<!-- taken from https://github.com/rstudio/rmarkdown/blob/67b7f5fc779e4cfdfd0f021d3d7745b6b6e17149/inst/rmd/h/default.html#L296-L362 -->
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("section-TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+<!-- end tabsets -->
+
+
+<link rel="stylesheet" href="css/tutorials.css" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+<div class="pageContent band">
+<div class="bandContent page">
+
+<div class="topics">
+
+<p><img src="images/UNSW_2017_Big_Data_landscape.jpg"
+style="width:75.0%" /></p>
+<div id="section-overview" class="section level2">
+<h2>Overview</h2>
+<blockquote>
+<p>“We can never control change; we can only control our response to
+change.”</p>
+</blockquote>
+<p>This tutorial discusses reactivity in the RShiny application
+framework: the process by which outputs are recalculated or code can be
+configured to run when inputs change.</p>
+<p><span class="copyright">© Copyright 2018, 2019, 2021, 2022 UNSW
+Sydney. All rights reserved except where otherwise stated.</span></p>
+</div>
+<div id="section-reactivity" class="section level2">
+<h2>Reactivity</h2>
+<p>Recall that Shiny apps consist of a <em>user-interface</em> running
+in a user’s browser and a <em>server</em> application with which it
+communicates.</p>
+<div align="center">
+<p><img src="images/shiny-architecture.png" style="width:50.0%" /></p>
+</div>
+<p><em>Inputs</em> in the UI are controlled by the user. Their values
+are sent to the server which generates <em>outputs</em>. The outputs are
+sent back to the UI. The UI displays these outputs.</p>
+<p>Input changes force output updates. Consider the following
+application with the server code</p>
+<pre><code>server &lt;- function(input, output) {
+  output$example1.hist &lt;- renderPlot({
+    break.fn &lt;- function(x) {
+      seq(min(x), max(x), length.out = input$example1.bins + 1)
+    }
+    hist(rnorm(1000), breaks=break.fn)
+  })
+}</code></pre>
+<p>and the UI as follows:</p>
+<div class="bordered-container-fluid">
+<pre class="r"><code>fluidPage(
+  p(sliderInput(&quot;example1.bins&quot;, &quot;No. of bins&quot;, value=5, min=5, max=21)),
+  p(plotOutput(&quot;example1.hist&quot;))
+)</code></pre>
+<div class="container-fluid">
+<p>
+<div class="form-group shiny-input-container">
+<label class="control-label" id="example1.bins-label" for="example1.bins">No. of bins</label>
+<input class="js-range-slider" id="example1.bins" data-skin="shiny" data-min="5" data-max="21" data-from="5" data-step="1" data-grid="true" data-grid-num="8" data-grid-snap="false" data-prettify-separator="," data-prettify-enabled="true" data-keyboard="true" data-data-type="number"/>
+</div>
+</p>
+<p>
+<div id="example1.hist" class="shiny-plot-output" style="width:100%;height:400px;"></div>
+</p>
+</div>
+</div>
+<p>
+<p>Changes to the input <code>input$bins</code> will result in a change
+to the output <code>output$hist</code>.</p>
+<p>Try it by changing the slider. The graph will update
+automatically.</p>
+<p>Shiny keeps track of these values which can change, and which will
+change depending on other values changing.</p>
+<p>These types of data items are called <em>reactive values</em> and
+must be used inside <em>reactive functions</em> like
+<code>renderPlot()</code>.</p>
+<div id="section-under-the-bonnet"
+class="section level3 under-the-bonnet">
+<h3>Under the bonnet</h3>
+<p>It may be helpful to some to explain the non-Shiny bits of the above
+example.</p>
+<p>Here:</p>
+<ul>
+<li>we are creating a function to calculate the breakpoints for our
+histogram</li>
+<li>we pass this function <code>break.fn</code> as the arguments
+<code>breaks</code> to <code>hist</code></li>
+<li>the breakpoint calculation function takes one argument: the list of
+values in the histogram</li>
+<li>here we want n equal-width bins so we take the minimum and maximum
+values in our value list and compute breakpoints accordingly using
+<code>seq()</code></li>
+</ul>
+</div>
+</div>
+<div id="section-reactive-functions" class="section level2">
+<h2>Reactive functions</h2>
+<p>Reactive functions take reactive values (usually inputs) and
+calculate new reactive values (<em>e.g.</em> outputs).</p>
+<p>A code chunk is provided to a reactive function as an closure
+argument, a chunk of code surrounded by <code>{...}</code>.</p>
+<p>In the following example</p>
+<pre><code>function(input, output) {
+  output$hist &lt;- renderPlot({
+    hist(rnorm(input$num))
+  })
+}</code></pre>
+<p>we can see that <code>renderPlot()</code> takes a closure as its
+argument: the chunk of code <code>{ hist(rnorm(input$num)) }</code>.</p>
+<p>Shiny scans this closure for reactive data values so it can work out
+when it needs to recalculate things.</p>
+<p>In this case it will find <code>input$num</code> and it knows that
+when <code>input$num</code> changes, a new value will need to be created
+for <code>output$hist</code> by executing the closure (running the
+supplied code chunk).</p>
+<p>Note that the entire code chunk will be executed.</p>
+<p>This is important to remember because if the closure is doing a lot
+of work, <em>all</em> that work is repeated each time.</p>
+<p>Also, if the closure is doing anything random, new random values will
+be generated each time. This may not always be what we want.</p>
+<p>All of the ‘render’ functions are reactive functions:</p>
+<ul>
+<li><code>renderDataTable()</code></li>
+<li><code>renderImage()</code></li>
+<li><code>renderPlot()</code></li>
+<li><code>renderPrint()</code></li>
+<li><code>renderTable()</code></li>
+<li><code>renderText()</code></li>
+<li><code>renderUI()</code></li>
+</ul>
+</div>
+<div id="section-unnecessary-computation" class="section level2">
+<h2>Unnecessary computation</h2>
+<p>Having Shiny keep track of these dependencies for us is extremely
+convenient but the choices it makes are not always desirable.</p>
+<p>This can lead to a lot of unnecessary extra computation if we aren’t
+careful with the way we construct out dependencies.</p>
+<p>We may be able to look at a closure containing multiple calculations
+based on two values from two input and know that only one value will
+change at a time but since we’ve put everything in one closure Shiny has
+to rerun the entire closure every time. Sometimes it can be helpful to
+split things into separated closures.</p>
+<p>In this example:</p>
+<pre><code>computed.value1 = input$value1 + 5
+computed.value2 = input$value2 + 10
+output$result = computed.value1 + computed.value2</code></pre>
+<p>Everything gets recalculated no matter which input changes even
+though only half the work needs to be done each time since the other
+value hasn’t changed. This is a trivial example but it illustrates the
+principle.</p>
+<p>Sometimes we only want to redo part of the work because only some
+inputs have changed.</p>
+<p>Sometimes we don’t want to do <em>any</em> work until a specific
+event. For example, we might have 4 inputs controlling a map but we
+don’t want to redraw the map every time one of the inputs changes only
+when the user has set all four inputs and then triggers a map
+redraw.</p>
+<p>Not all unnecessary computation is related to input dependencies.</p>
+<p>Consider the following code:</p>
+<pre><code>output$popmap &lt;- renderLeaflet({
+
+  CED_polyinfo &lt;- CED_info %&gt;%
+    mutate(CED_CODE_2016 = paste0(&quot;CED&quot;, CED_info$CED_CODE_2016)) %&gt;%
+    group_by(CED_CODE_2016, CED_NAME_2016) %&gt;%
+    summarise(total_area = sum(AREA_ALBERS_SQKM)) %&gt;%
+    left_join(CED_popinfo) %&gt;%
+    mutate(pop_density = Tot_P_P / total_area)
+    
+  # let&#39;s use white -&gt; orange
+  pop_pal &lt;- colorNumeric(c(input$zeropopcolour, input$maxpopcolour),
+    c(0, input$maxpop))
+    
+  # join the CED info to our polygons plotting
+  Sydney_polys@data &lt;- left_join(Sydney_polys@data, CED_polyinfo)
+  
+  # draw our map
+  leaflet() %&gt;% ...
+
+})</code></pre>
+<p>Notice the first statement, the assignment to
+<code>CED_polyinfo</code></p>
+<ul>
+<li>does a reasonable amount of work; and</li>
+<li>does not depend on any inputs.</li>
+</ul>
+<p>In other words, the value it computes does not change. This is not
+only also true of the calculation involving
+<code>Sydney_polys@data</code> but in that case we don’t want to do that
+multiple times.</p>
+<p>This sort of code should not be in the closure passed to the reactive
+function as it results in unnecessary computation.</p>
+<p>The rest of the code depends on three inputs:</p>
+<ul>
+<li>zeropopcolour</li>
+<li>maxpopcolour</li>
+<li>maxpop</li>
+</ul>
+<p>And we want the output to be redrawn only whenever any of these
+change.</p>
+</div>
+<div id="section-dependencies-and-randomness" class="section level2">
+<h2>Dependencies and randomness</h2>
+<p>Consider:</p>
+<pre><code>output$hist &lt;- renderPlot({
+  hist(rnorm(input$num))
+})
+
+output$summary &lt;- renderPrint({
+  summary(rnorm(input$num))
+})</code></pre>
+<p>We’re calling <code>rnorm()</code> twice here.</p>
+<p>Not only that, presumably we were trying to display some summary
+information and a histogram about the same 1000-element random
+sample.</p>
+<p>However, in this case, each call to <code>rnorm()</code> will produce
+a <em>different</em> sample of 1000 numbers.</p>
+<p>The stats displayed will be about a different sample to the one
+displayed in the histogram!</p>
+<div class="bordered-container-fluid">
+<pre class="r"><code>fluidPage(
+  p(sliderInput(&quot;rnorm1.num&quot;, &quot;Sample size&quot;, value=100, min=100, max=1000, step=100)),
+  p(plotOutput(&quot;rnorm1.hist&quot;)),
+  p(textOutput(&quot;rnorm1.summary&quot;))
+)</code></pre>
+<div class="container-fluid">
+<p>
+<div class="form-group shiny-input-container">
+<label class="control-label" id="rnorm1.num-label" for="rnorm1.num">Sample size</label>
+<input class="js-range-slider" id="rnorm1.num" data-skin="shiny" data-min="100" data-max="1000" data-from="100" data-step="100" data-grid="true" data-grid-num="9" data-grid-snap="false" data-prettify-separator="," data-prettify-enabled="true" data-keyboard="true" data-data-type="number"/>
+</div>
+</p>
+<p>
+<div id="rnorm1.hist" class="shiny-plot-output" style="width:100%;height:400px;"></div>
+</p>
+<p>
+<div id="rnorm1.summary" class="shiny-text-output"></div>
+</p>
+</div>
+</div>
+<p>
+<p>If you play with the above example and move the slider you will
+quickly come across a situation where the minimum and/or maximum in the
+summary are not the same as in the histogram.</p>
+</div>
+<div id="section-custom-reactive-functions" class="section level2">
+<h2>Custom reactive functions</h2>
+<p>We can write our own <em>reactive functions</em> that behave like
+<code>renderPlot()</code> and its friends.</p>
+<p>Reactive functions</p>
+<ul>
+<li>remember their results</li>
+<li>they return this same result without executing until their inputs
+change</li>
+<li>when the inputs have changed the closure is rerun and the new
+computer value remembered</li>
+</ul>
+<p>Let’s rewrite our <code>rnorm()</code> example to remove the problem
+of the histogram and the summary referring to difference sets of
+numbers.</p>
+<pre><code>data &lt;- reactive({
+  rnorm(input$rnorm2.num)
+})
+
+output$rnorm2hist &lt;- renderPlot({
+  hist(data())
+})
+
+output$rnorm2.summary &lt;- renderPrint({
+  summary(data())
+})</code></pre>
+<p>Here we have created our own reactive function <code>data()</code>
+which depends on <code>input$rnorm2.num</code>.</p>
+<p>When <code>input$rnorm2.num</code> changes it will invalidate
+<code>data()</code> (and transitively also invalidate
+<code>output$rnorm2.hist</code> and <code>output$rnorm2.summary</code>)
+so all three of these will need to be recalculated.</p>
+<p>Let’s imagine <code>output$rnorm2.hist</code> is recalculated first.
+(It’s important to realise it may not be. Just because it’s listed first
+in our code doesn’t mean it will be recalculated before
+<code>output$rnorm2.summary</code>.) When <code>data()</code> is called,
+it will also be recalculated, <code>rnorm()</code> will be called and a
+new set of sample numbers generated.</p>
+<p>When <code>output$rnorm2.summary</code> is recalculated next,
+<code>input$rnorm2.num</code> <em>has not changed</em> so
+<code>data()</code> will return the previously computed sample.</p>
+<p>In this way <code>hist()</code> and <code>summary()</code> will end
+up using <em>the same sample set</em>.</p>
+<p>Try it now:</p>
+<div class="bordered-container-fluid">
+<pre class="r"><code>fluidPage(
+  p(sliderInput(&quot;rnorm2.num&quot;, &quot;Sample size&quot;, value=100, min=100, max=1000, step=100)),
+  p(plotOutput(&quot;rnorm2.hist&quot;)),
+  p(textOutput(&quot;rnorm2.summary&quot;))
+)</code></pre>
+<div class="container-fluid">
+<p>
+<div class="form-group shiny-input-container">
+<label class="control-label" id="rnorm2.num-label" for="rnorm2.num">Sample size</label>
+<input class="js-range-slider" id="rnorm2.num" data-skin="shiny" data-min="100" data-max="1000" data-from="100" data-step="100" data-grid="true" data-grid-num="9" data-grid-snap="false" data-prettify-separator="," data-prettify-enabled="true" data-keyboard="true" data-data-type="number"/>
+</div>
+</p>
+<p>
+<div id="rnorm2.hist" class="shiny-plot-output" style="width:100%;height:400px;"></div>
+</p>
+<p>
+<div id="rnorm2.summary" class="shiny-text-output"></div>
+</p>
+</div>
+</div>
+<p>
+<p>Notice the results are consistent now.</p>
+<p>Reactive function <em>cache</em> their results. If they are not
+dependent on any inputs then they calculate their value once and never
+change.</p>
+<pre><code>get_CID_info &lt;- reactive({
+  CED_info %&gt;%
+    mutate(CED_CODE_2016 = paste0(&quot;CED&quot;, CED_info$CED_CODE_2016)) %&gt;%
+    group_by(CED_CODE_2016, CED_NAME_2016) %&gt;%
+    summarise(total_area = sum(AREA_ALBERS_SQKM)) %&gt;%
+    left_join(CED_popinfo) %&gt;%
+    mutate(pop_density = Tot_P_P / total_area)
+})</code></pre>
+<p>This code has no input dependencies and so will never be
+invalidated.</p>
+<p>It’s used to cache the final value and avoid recomputing it
+unnecessarily.</p>
+<p>We would call it as <code>get_CID_info()</code>.</p>
+</div>
+<div id="section-preventing-reactivity" class="section level2">
+<h2>Preventing reactivity</h2>
+<p>Sometimes we want to stop_ Shiny from recomputing values when things
+change.</p>
+<p>The <code>isolate()</code> function takes a closure and creates a
+value from which is non-reactive.</p>
+<p>Notice in this example that the histogram gets recomputed when
+<code>input$isolate.num</code> gets changed but not when
+<code>input$isolate1.title</code> is changed. That change doesn’t get
+picked up until the next time the histogram is recomputed (when the
+<code>input$isolate.num</code> changes).</p>
+<pre><code>output$isolate1.hist &lt;- renderPlot({
+  hist(rnorm(input$isolate1.num), main = isolate({input$isolate1.title}))
+})</code></pre>
+<div class="bordered-container-fluid">
+<pre class="r"><code>fluidPage(
+  p(sliderInput(inputId = &quot;isolate1.num&quot;,
+              label = &quot;Choose a number&quot;,
+              value = 25, min = 10, max = 100, step=5)),
+  p(textInput(inputId = &quot;isolate1.title&quot;,
+            label = &quot;Write a title&quot;,
+            value = &quot;Histogram of Random Normal Values&quot;)),
+  p(plotOutput(&quot;isolate1.hist&quot;))
+)</code></pre>
+<div class="container-fluid">
+<p>
+<div class="form-group shiny-input-container">
+<label class="control-label" id="isolate1.num-label" for="isolate1.num">Choose a number</label>
+<input class="js-range-slider" id="isolate1.num" data-skin="shiny" data-min="10" data-max="100" data-from="25" data-step="5" data-grid="true" data-grid-num="9" data-grid-snap="false" data-prettify-separator="," data-prettify-enabled="true" data-keyboard="true" data-data-type="number"/>
+</div>
+</p>
+<p>
+<div class="form-group shiny-input-container">
+<label class="control-label" id="isolate1.title-label" for="isolate1.title">Write a title</label>
+<input id="isolate1.title" type="text" class="form-control" value="Histogram of Random Normal Values"/>
+</div>
+</p>
+<p>
+<div id="isolate1.hist" class="shiny-plot-output" style="width:100%;height:400px;"></div>
+</p>
+</div>
+</div>
+</div>
+<div id="section-responding-to-events" class="section level2">
+<h2>Responding to events</h2>
+<p>Sometimes we don’t want to do <em>any</em> recalculation until the
+user triggers it.</p>
+<p>For example, we might want to have an update button as part of the
+interface.</p>
+<p>We can use an <code>observeEvent()</code> reactive function to do
+this.</p>
+<p>The function <code>observeEvent()</code> takes two arguments</p>
+<ul>
+<li>a vector of values to monitor (may also be a single value)</li>
+<li>a closure to execute</li>
+</ul>
+<p>When any of the inputs change, the closure is executed.</p>
+<div class="bordered-container-fluid">
+<pre class="r"><code>fluidPage(
+  p(),
+  p(&quot;Press the button:&quot;, actionButton(inputId = &quot;observeEvent.clicks&quot;, label = &quot;Click me&quot;))
+)</code></pre>
+<div class="container-fluid">
+<p></p>
+<p>
+Press the button:
+<button id="observeEvent.clicks" type="button" class="btn btn-default action-button">Click me</button>
+</p>
+</div>
+</div>
+<p>
+<pre><code>observeEvent(input$observeEvent.clicks, {
+  print(input$observeEvent.clicks[[1]])
+})</code></pre>
+<p>The <code>observeEvent()</code> (and <code>observe()</code>, see
+below) reactive functions do not generate a result hence there is no
+assignment to any <code>output$</code> slot.</p>
+<p>These functions are called purely for their side-effects.</p>
+<p>If you try the above example by clicking the <em>Click me</em> button
+you will see output in the RStudio window.</p>
+<p>There is also a version of this observer reactive function called
+<code>observe()</code> which only takes a closure. It tracks all inputs
+in the closure and therefore doesn’t take a first argument.</p>
+<pre><code>observe({
+  ...
+})</code></pre>
+<p>If we do want to calculate a result, there is similar function to
+<code>observeEvent()</code> called <code>eventReactive()</code> which
+takes as its first argument the values to monitor.</p>
+<p>Let’s create a version of our histogram example with a slider and
+title but which only updates when a button is pressed.</p>
+<pre><code>data &lt;- eventReactive(input$on.demand.go, {
+  rnorm(input$on.demand.num)
+})
+
+output$on.demand.hist &lt;- renderPlot({
+  hist(data())
+})</code></pre>
+<div class="bordered-container-fluid">
+<pre class="r"><code>fluidPage(
+  p(sliderInput(inputId = &quot;on.demand.num&quot;,
+              label = &quot;Choose a number&quot;,
+              value = 25, min = 10, max = 100, step=5)),
+  p(actionButton(inputId = &quot;on.demand.go&quot;, label = &quot;Update&quot;)),
+  p(plotOutput(&quot;on.demand.hist&quot;))
+)</code></pre>
+<div class="container-fluid">
+<p>
+<div class="form-group shiny-input-container">
+<label class="control-label" id="on.demand.num-label" for="on.demand.num">Choose a number</label>
+<input class="js-range-slider" id="on.demand.num" data-skin="shiny" data-min="10" data-max="100" data-from="25" data-step="5" data-grid="true" data-grid-num="9" data-grid-snap="false" data-prettify-separator="," data-prettify-enabled="true" data-keyboard="true" data-data-type="number"/>
+</div>
+</p>
+<p>
+<button id="on.demand.go" type="button" class="btn btn-default action-button">Update</button>
+</p>
+<p>
+<div id="on.demand.hist" class="shiny-plot-output" style="width:100%;height:400px;"></div>
+</p>
+</div>
+</div>
+<p>So we have two function which can be used to execute code reactively
+and don’t return a value</p>
+<ul>
+<li><code>observe()</code></li>
+<li><code>observeEvent()</code></li>
+</ul>
+<p>and two corresponding functions which can be used to execute code
+reactively and do return a value</p>
+<ul>
+<li><code>reactive()</code></li>
+<li><code>eventReactive()</code></li>
+</ul>
+</div>
+<div id="section-non-input-reactive-values" class="section level2">
+<h2>Non-input reactive values</h2>
+<p>We can create our own reactive values which behave to shiny the same
+way but which are not connected to inputs.</p>
+<p>The <code>reactiveValues()</code> function creates a list of reactive
+values which can be used like inputs.</p>
+<pre><code>rv &lt;- reactiveValues()</code></pre>
+<p>We can add new reactive values to this list later using the $
+syntax</p>
+<pre><code>rv$data = rnorm(100)</code></pre>
+<p>It can be given a list of initial values</p>
+<pre><code>rv &lt;- reactiveValues(data = rnorm(100))</code></pre>
+<p>We can use these variables in our code and assign to them to trigger
+reactive updates of dependent values.</p>
+<pre><code>rv &lt;- reactiveValues(data = rnorm(100))
+
+observeEvent(input$reactiveValues.norm, {rv$data &lt;- rnorm(100)})
+observeEvent(input$reactiveValues.unif, {rv$data &lt;- runif(100)})
+
+output$reactiveValues.hist &lt;- renderPlot({
+  hist(rv$data)
+})</code></pre>
+<div class="bordered-container-fluid">
+<pre class="r"><code>fluidPage(
+  p(actionButton(inputId = &quot;reactiveValues.norm&quot;, label = &quot;Normal&quot;)),
+  p(actionButton(inputId = &quot;reactiveValues.unif&quot;, label = &quot;Uniform&quot;)),
+  p(plotOutput(&quot;reactiveValues.hist&quot;))
+)</code></pre>
+<div class="container-fluid">
+<p>
+<button id="reactiveValues.norm" type="button" class="btn btn-default action-button">Normal</button>
+</p>
+<p>
+<button id="reactiveValues.unif" type="button" class="btn btn-default action-button">Uniform</button>
+</p>
+<p>
+<div id="reactiveValues.hist" class="shiny-plot-output" style="width:100%;height:400px;"></div>
+</p>
+</div>
+</div>
+</div>
+<div id="section-reactivity-overview" class="section level2">
+<h2>Reactivity overview</h2>
+<p>Carefully consider the data flows in your application and where
+reactivity needs to occur.</p>
+<div align="center">
+<p><img src="images/reactivity-flow.png" style="width:75.0%" /></p>
+</div>
+<ul>
+<li>what needs to respond to changes in inputs?</li>
+<li>should those changes be automatic or manually configured?</li>
+<li>what computation can be cached using reactive values?</li>
+</ul>
+<p>Try and minimise how often code is run.</p>
+<p>There are three places to put code which affects how often it is
+executed:</p>
+<ul>
+<li>code outside of the server function gets run once per session</li>
+<li>code inside the server function gets run once per user
+(connection)</li>
+<li>code inside a reactive function get run once per reaction (value
+change)</li>
+</ul>
+</div>
+<div id="section-summary" class="section level2">
+<h2>Summary</h2>
+<p>This concludes our tutorial on reactivity in Shiny.</p>
+<p>Shiny applications:</p>
+<ul>
+<li>keep track of the relationship between inputs and outputs</li>
+<li>recalculate outputs automatically when inputs change</li>
+<li>can be told not to respond to changing data using
+<em>isolate()</em></li>
+<li>can be given code chunks to run when certain inputs and other data
+change</li>
+</ul>
+<p>Also</p>
+<ul>
+<li>try and minimise how often code is run</li>
+<li>the placement of code in your application determines how often it
+might be executed 
+<script type="application/shiny-prerendered" data-context="server-start">
+library(learnr)
+knitr::opts_chunk$set(echo = FALSE)
+library(datasets)
+library(shiny)
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+learnr:::register_http_handlers(session, metadata = list(id = "au.edu.unsw.cbdrh.hdat9800.chapter8.reactivity", version = 1.1))
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+session$onSessionEnded(function() {
+        learnr:::session_stop_event(session)
+      })
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+output$example1.hist <- renderPlot({
+  break.fn <- function(x) {
+    seq(min(x), max(x), length.out = input$example1.bins + 1)
+  }
+  hist(rnorm(1000), breaks=break.fn)
+})
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+output$rnorm1.hist <- renderPlot({
+  hist(rnorm(input$rnorm1.num))
+})
+
+output$rnorm1.summary <- renderPrint({
+  summary(rnorm(input$rnorm1.num))
+})
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+
+data <- reactive({
+  rnorm(input$rnorm2.num)
+})
+
+output$rnorm2.hist <- renderPlot({
+  hist(data())
+})
+
+output$rnorm2.summary <- renderPrint({
+  summary(data())
+})
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+output$isolate1.hist <- renderPlot({
+  hist(rnorm(input$isolate1.num), main = isolate({input$isolate1.title}))
+})
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+observeEvent(input$observeEvent.clicks, {
+  print(input$observeEvent.clicks[[1]])
+})
+</script>
+
+
+<script type="application/shiny-prerendered" data-context="server">
+data <- eventReactive(input$on.demand.go, {
+  rnorm(input$on.demand.num)
+})
+
+output$on.demand.hist <- renderPlot({
+  hist(data())
+})
+</script>
+ 
+<script type="application/shiny-prerendered" data-context="server">
+rv <- reactiveValues(data = rnorm(100))
+
+observeEvent(input$reactiveValues.norm, {rv$data <- rnorm(100)})
+observeEvent(input$reactiveValues.unif, {rv$data <- runif(100)})
+
+output$reactiveValues.hist <- renderPlot({
+  hist(rv$data)
+})
+</script>
+</li>
+</ul>
+<!--html_preserve-->
+<script type="application/shiny-prerendered" data-context="dependencies">
+{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["header-attrs"]},{"type":"character","attributes":{},"value":["2.14"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/pandoc"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["header-attrs.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.14"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/3.6.0"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery-3.6.0.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquerylib"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.1.4"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.3.5"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","shim/html5shiv.min.js","shim/respond.min.js"]},{"type":"character","attributes":{},"value":["css/cerulean.min.css"]},{"type":"character","attributes":{},"value":["<style>h1 {font-size: 34px;}\n       h1.title {font-size: 38px;}\n       h2 {font-size: 30px;}\n       h3 {font-size: 24px;}\n       h4 {font-size: 18px;}\n       h5 {font-size: 16px;}\n       h6 {font-size: 12px;}\n       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}\n       pre:not([class]) { background-color: white }<\/style>"]},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.14"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["pagedtable"]},{"type":"character","attributes":{},"value":["1.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/pagedtable-1.1"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/pagedtable.js"]},{"type":"character","attributes":{},"value":["css/pagedtable.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.14"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["highlightjs"]},{"type":"character","attributes":{},"value":["9.12.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/highlightjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["highlight.js"]},{"type":"character","attributes":{},"value":["textmate.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.14"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial.js"]},{"type":"character","attributes":{},"value":["tutorial.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-autocompletion"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-autocompletion.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-diagnostics"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-diagnostics.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-format"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmarkdown/templates/tutorial/resources"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-format.js"]},{"type":"character","attributes":{},"value":["tutorial-format.css","rstudio-theme.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/3.6.0"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery-3.6.0.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquerylib"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.1.4"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["navigation"]},{"type":"character","attributes":{},"value":["1.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/navigation-1.1"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tabsets.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.14"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["highlightjs"]},{"type":"character","attributes":{},"value":["9.12.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/highlightjs"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["highlight.js"]},{"type":"character","attributes":{},"value":["default.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.14"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/3.6.0"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery-3.6.0.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquerylib"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.1.4"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["font-awesome"]},{"type":"character","attributes":{},"value":["5.1.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["rmd/h/fontawesome"]}]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["css/all.css","css/v4-shims.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["rmarkdown"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["2.14"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootbox"]},{"type":"character","attributes":{},"value":["4.4.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/bootbox"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["bootbox.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["idb-keyvalue"]},{"type":"character","attributes":{},"value":["3.2.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/idb-keyval"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["idb-keyval-iife-compat.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[false]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial.js"]},{"type":"character","attributes":{},"value":["tutorial.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-autocompletion"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-autocompletion.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["tutorial-diagnostics"]},{"type":"character","attributes":{},"value":["0.10.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["lib/tutorial"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["tutorial-diagnostics.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["learnr"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.10.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared"]},{"type":"character","attributes":{},"value":["www/shared"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ionrangeslider-javascript"]},{"type":"character","attributes":{},"value":["2.3.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/ionrangeslider"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/ion.rangeSlider.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["strftime"]},{"type":"character","attributes":{},"value":["0.9.2"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/strftime"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["strftime-min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ionrangeslider-css"]},{"type":"character","attributes":{},"value":["2.3.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/ionrangeslider"]}]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["css/ion.rangeSlider.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.4.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared/bootstrap"]},{"type":"character","attributes":{},"value":["www/shared/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","accessibility/js/bootstrap-accessibility.min.js"]},{"type":"character","attributes":{},"value":["css/bootstrap.min.css","accessibility/css/bootstrap-accessibility.min.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared"]},{"type":"character","attributes":{},"value":["www/shared"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ionrangeslider-javascript"]},{"type":"character","attributes":{},"value":["2.3.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/ionrangeslider"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/ion.rangeSlider.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["strftime"]},{"type":"character","attributes":{},"value":["0.9.2"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/strftime"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["strftime-min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ionrangeslider-css"]},{"type":"character","attributes":{},"value":["2.3.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/ionrangeslider"]}]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["css/ion.rangeSlider.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.4.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared/bootstrap"]},{"type":"character","attributes":{},"value":["www/shared/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","accessibility/js/bootstrap-accessibility.min.js"]},{"type":"character","attributes":{},"value":["css/bootstrap.min.css","accessibility/css/bootstrap-accessibility.min.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared"]},{"type":"character","attributes":{},"value":["www/shared"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ionrangeslider-javascript"]},{"type":"character","attributes":{},"value":["2.3.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/ionrangeslider"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/ion.rangeSlider.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["strftime"]},{"type":"character","attributes":{},"value":["0.9.2"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/strftime"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["strftime-min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ionrangeslider-css"]},{"type":"character","attributes":{},"value":["2.3.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/ionrangeslider"]}]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["css/ion.rangeSlider.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.4.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared/bootstrap"]},{"type":"character","attributes":{},"value":["www/shared/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","accessibility/js/bootstrap-accessibility.min.js"]},{"type":"character","attributes":{},"value":["css/bootstrap.min.css","accessibility/css/bootstrap-accessibility.min.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared"]},{"type":"character","attributes":{},"value":["www/shared"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ionrangeslider-javascript"]},{"type":"character","attributes":{},"value":["2.3.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/ionrangeslider"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/ion.rangeSlider.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["strftime"]},{"type":"character","attributes":{},"value":["0.9.2"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/strftime"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["strftime-min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ionrangeslider-css"]},{"type":"character","attributes":{},"value":["2.3.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/ionrangeslider"]}]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["css/ion.rangeSlider.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.4.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared/bootstrap"]},{"type":"character","attributes":{},"value":["www/shared/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","accessibility/js/bootstrap-accessibility.min.js"]},{"type":"character","attributes":{},"value":["css/bootstrap.min.css","accessibility/css/bootstrap-accessibility.min.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared"]},{"type":"character","attributes":{},"value":["www/shared"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.4.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared/bootstrap"]},{"type":"character","attributes":{},"value":["www/shared/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","accessibility/js/bootstrap-accessibility.min.js"]},{"type":"character","attributes":{},"value":["css/bootstrap.min.css","accessibility/css/bootstrap-accessibility.min.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared"]},{"type":"character","attributes":{},"value":["www/shared"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ionrangeslider-javascript"]},{"type":"character","attributes":{},"value":["2.3.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/ionrangeslider"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/ion.rangeSlider.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["strftime"]},{"type":"character","attributes":{},"value":["0.9.2"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/strftime"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["strftime-min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["ionrangeslider-css"]},{"type":"character","attributes":{},"value":["2.3.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href"]}},"value":[{"type":"character","attributes":{},"value":["shared/ionrangeslider"]}]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["css/ion.rangeSlider.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"logical","attributes":{},"value":[true]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.4.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared/bootstrap"]},{"type":"character","attributes":{},"value":["www/shared/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","accessibility/js/bootstrap-accessibility.min.js"]},{"type":"character","attributes":{},"value":["css/bootstrap.min.css","accessibility/css/bootstrap-accessibility.min.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["jquery"]},{"type":"character","attributes":{},"value":["3.6.0"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared"]},{"type":"character","attributes":{},"value":["www/shared"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["jquery.min.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["bootstrap"]},{"type":"character","attributes":{},"value":["3.4.1"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["href","file"]}},"value":[{"type":"character","attributes":{},"value":["shared/bootstrap"]},{"type":"character","attributes":{},"value":["www/shared/bootstrap"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["viewport"]}},"value":[{"type":"character","attributes":{},"value":["width=device-width, initial-scale=1"]}]},{"type":"character","attributes":{},"value":["js/bootstrap.min.js","accessibility/js/bootstrap-accessibility.min.js"]},{"type":"character","attributes":{},"value":["css/bootstrap.min.css","accessibility/css/bootstrap-accessibility.min.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.1"]}]}]}
+</script>
+<!--/html_preserve-->
+<!--html_preserve-->
+<script type="application/shiny-prerendered" data-context="execution_dependencies">
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42]}},"value":[{"type":"character","attributes":{},"value":["base","bslib","cli","compiler","datasets","digest","ellipsis","evaluate","fastmap","graphics","grDevices","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","learnr","lifecycle","magrittr","markdown","methods","mime","promises","R6","Rcpp","rlang","rmarkdown","rprojroot","rstudioapi","sass","shiny","stats","stringi","stringr","tools","utils","withr","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["4.1.2","0.3.1","3.3.0","4.1.2","4.1.2","0.6.29","0.3.2","0.15","1.1.0","4.1.2","4.1.2","0.5.2","1.5.4","1.6.5","0.1.4","1.8.0","1.39","1.3.0","0.10.1","1.0.1","2.0.3","1.1","4.1.2","0.12","1.2.0.1","2.5.1","1.0.8.3","1.0.3","2.14","2.0.3","0.13","0.4.1","1.7.1","4.1.2","1.7.6","1.4.0","4.1.2","4.1.2","2.5.0","0.31","1.8-4","2.3.5"]}]}]}
+</script>
+<!--/html_preserve-->
+</div>
+
+</div> <!-- topics -->
+
+<div class="topicsContainer">
+<div class="topicsPositioner">
+<div class="band">
+<div class="bandContent topicsListContainer">
+
+<!-- begin doc-metadata -->
+<div id="doc-metadata">
+<h2 class="title toc-ignore" style="display:none;">Chapters 8 &amp; 9:
+Reactivity in Shiny</h2>
+</div>
+<!-- end doc-metadata -->
+
+</div> <!-- bandContent.topicsListContainer -->
+</div> <!-- band -->
+</div> <!-- topicsPositioner -->
+</div> <!-- topicsContainer -->
+
+
+</div> <!-- bandContent page -->
+</div> <!-- pageContent band -->
+
+
+
+
+<script>
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+
+</body>
+
+</html>
