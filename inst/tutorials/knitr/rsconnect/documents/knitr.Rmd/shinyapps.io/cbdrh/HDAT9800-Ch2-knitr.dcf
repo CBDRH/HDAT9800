@@ -5,9 +5,9 @@ account: cbdrh
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6423997
-bundleId: 5973528
+bundleId: 7304074
 url: https://cbdrh.shinyapps.io/HDAT9800-Ch2-knitr/
-when: 1654225631.23122
-lastSyncTime: 1654225631.23124
+when: 1685926570.01449
+lastSyncTime: 1685926570.0145
 asMultiple: FALSE
 asStatic: FALSE

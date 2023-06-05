@@ -1,7 +1,7 @@
 Package: hdat9800tutorials
 Type: Package
 Title: Visualisation and Communication of Health Data (HDAT9800)
-Version: 0.1.0
+Version: 0.1.11
 Authors@R: as.person(c(
     "Tim Churches <timothy.churches@unsw.edu.au> [aut, cre]", 
     "James Farrow <james@fn.com.au> [aut]",

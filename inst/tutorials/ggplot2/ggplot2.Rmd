@@ -2,7 +2,7 @@
 title: "Chapter 3: ggplot2"
 tutorial:
   id: "au.edu.unsw.cbdrh.hdat9800.chapter3.ggplot2"
-  version: 1.0.9
+  version: 1.0.10
 output:
   learnr::tutorial:
     progressive: false

@@ -2,7 +2,7 @@
 title: "Chapter 2: knitr"
 tutorial:
   id: "au.edu.unsw.cbdrh.hdat9800.chapter2.knitr"
-  version: 1.2.4
+  version: 1.2.5
 output:
   learnr::tutorial:
     progressive: false
