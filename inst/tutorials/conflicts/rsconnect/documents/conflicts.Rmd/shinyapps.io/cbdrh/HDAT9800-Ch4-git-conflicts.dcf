@@ -5,9 +5,9 @@ account: cbdrh
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6515805
-bundleId: 6022512
+bundleId: 7309409
 url: https://cbdrh.shinyapps.io/HDAT9800-Ch4-git-conflicts/
-when: 1655685629.76128
-lastSyncTime: 1655685629.76129
+when: 1686022099.9838
+lastSyncTime: 1686022099.98381
 asMultiple: FALSE
 asStatic: FALSE

@@ -2,7 +2,7 @@
 title: "Chapter 4: Resolving conflicts in git"
 tutorial:
   id: "au.edu.unsw.cbdrh.git_conflicts"
-  version: 1.0.5
+  version: 1.0.6
 output:
   learnr::tutorial:
     progressive: false
