@@ -2,7 +2,7 @@
 title: "Chapter 7: Interactive Mapping with Shiny"
 tutorial:
   id: "au.edu.unsw.cbdrh.hdat9800.chapter7.mapping"
-  version: 1.1.0
+  version: 1.1.1
 output:
   learnr::tutorial:
     progressive: false
@@ -13,10 +13,15 @@ description: "UNSW Health Data Science: interactive mapping with leaflet and shi
 
 ```{r setup, include=FALSE}
 library(learnr)
+library(remotes)
 knitr::opts_chunk$set(echo = FALSE)
 library(leaflet)
-library(rgdal)
+# library(rgdal) # rgdal is being retired
+library(sf)
 library(dplyr)
+
+if (!require(hdat9800tutorials)) remotes::install_github('CBDRH/hdat9800')
+library(hdat9800tutorials)
 
 my.package <- 'hdat9800tutorials'
 ```
@@ -113,8 +118,6 @@ The easiest thing to do is to add a `CED_CODE_2016` column to the shape data.
 Here is our server code:
 
 ```
-my.package <- packageName()
-
 # a utility function for calculating filenames included with our tutorial package
 packageFile <- function(filename) {
   # look for filename in the extdata directory of our package 
@@ -129,12 +132,16 @@ CED_info <- CED_info %>%
 
 # read in the CED polygons and add CED code column
 CED_polys_file <- packageFile("CED_2016_AUST.shp")
-CED_polys <- rgdal::readOGR(CED_polys_file)
-CED_polys$CED_CODE_2016 <- paste0("CED", CED_polys$CED_CODE16)
+CED_polys <- sf::st_read(CED_polys_file) %>%
+              sf::st_transform("+proj=longlat +datum=WGS84")
+# CED_polys <- rgdal::readOGR(CED_polys_file) # rgdal is being retired
+CED_polys <- CED_polys %>%
+  mutate(CED_CODE_2016 = factor(paste0("CED", CED_CODE16)))
 
 # just select one polygon with id CED101 (Banks)
 
-CED_poly <- CED_polys[CED_polys$CED_CODE_2016 == "CED101"]
+CED_poly <- CED_polys %>% 
+              filter(CED_CODE_2016 == "CED101")
 
 server <- function(input, output) {
   output$basic.map <- renderLeaflet({
@@ -160,13 +167,18 @@ CED_info <- CED_info %>%
 
 # read in the CED polygons and add CED code column
 CED_polys_file <- packageFile("CED_2016_AUST.shp")
-CED_polys <- rgdal::readOGR(CED_polys_file)
-CED_polys$CED_CODE_2016 <- factor(paste0("CED", CED_polys$CED_CODE16))
+CED_polys <- sf::st_read(CED_polys_file) %>%
+              sf::st_transform("+proj=longlat +datum=WGS84")
+# CED_polys <- rgdal::readOGR(CED_polys_file) # rgdal is being retired
+CED_polys <- CED_polys %>%
+  mutate(CED_CODE_2016 = factor(paste0("CED", CED_CODE16)))
 
 # just select one polygon with id CED101 (Banks)
 
-CED_poly <- CED_polys[CED_polys$CED_CODE_2016 == "CED101",]
+CED_poly <- CED_polys %>% 
+              filter(CED_CODE_2016 == "CED101")
 ```
+
 ```{r basic.map-server, context="server"}
 output$basic.map <- renderLeaflet({
   m <- leaflet() %>%
@@ -437,12 +449,12 @@ CED_names <- c("Banks", "Barton", "Cook", "Hughes", "Kingsford Smith", "Wentwort
               "Bennelong", "North Sydney", "Warringah", "Werriwa")
 CED_codes <- unique(CED_info %>% filter(CED_NAME_2016 %in% CED_names) %>% select(CED_CODE_2016))$CED_CODE_2016
 median_polys <- CED_polys[CED_polys$CED_CODE_2016 %in% CED_codes,]
-median_polys@data <- median_polys@data %>% left_join(CED_median_info, 'CED_CODE_2016')
-median_polys@data$Median_rent_weekly_diff = median_polys@data$Median_rent_weekly - AUST_Median_rent_weekly
+median_polys <- median_polys %>% left_join(CED_median_info, 'CED_CODE_2016')
+median_polys$Median_rent_weekly_diff = median_polys$Median_rent_weekly - AUST_Median_rent_weekly
 
 # Let's find the maximum and minimum Median_rent_weekly for the CEDs we've selected
-CED_max_Median_rent_weekly <- max(median_polys@data$Median_rent_weekly)
-CED_min_Median_rent_weekly <- min(median_polys@data$Median_rent_weekly)
+CED_max_Median_rent_weekly <- max(median_polys$Median_rent_weekly)
+CED_min_Median_rent_weekly <- min(median_polys$Median_rent_weekly)
 
 # Let's also find the maximum difference from the national median
 AUST_max_Median_rent_weekly_diff <- max(
@@ -528,12 +540,12 @@ CED_names <- c("Banks", "Barton", "Cook", "Hughes", "Kingsford Smith", "Wentwort
               "Bennelong", "North Sydney", "Warringah", "Werriwa")
 CED_codes <- unique(CED_info %>% filter(CED_NAME_2016 %in% CED_names) %>% select(CED_CODE_2016))$CED_CODE_2016
 median_polys <- CED_polys[CED_polys$CED_CODE_2016 %in% CED_codes,]
-median_polys@data <- median_polys@data %>% left_join(CED_median_info, 'CED_CODE_2016')
-median_polys@data$Median_rent_weekly_diff = median_polys@data$Median_rent_weekly - AUST_Median_rent_weekly
+median_polys <- median_polys %>% left_join(CED_median_info, 'CED_CODE_2016')
+median_polys$Median_rent_weekly_diff = median_polys$Median_rent_weekly - AUST_Median_rent_weekly
 
 # Let's find the maximum and minimum Median_rent_weekly for the CEDs we've selected
-CED_max_Median_rent_weekly <- max(median_polys@data$Median_rent_weekly)
-CED_min_Median_rent_weekly <- min(median_polys@data$Median_rent_weekly)
+CED_max_Median_rent_weekly <- max(median_polys$Median_rent_weekly)
+CED_min_Median_rent_weekly <- min(median_polys$Median_rent_weekly)
 
 # Let's also find the maximum difference from the national median
 AUST_max_Median_rent_weekly_diff <- max(

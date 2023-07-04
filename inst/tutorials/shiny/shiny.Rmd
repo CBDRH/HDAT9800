@@ -2,7 +2,7 @@
 title: "Chapter 6: Shiny"
 tutorial:
   id: "au.edu.unsw.cbdrh.hdat9800.chapter6.shiny"
-  version: 1.6
+  version: 1.7
 output:
   learnr::tutorial:
     progressive: false

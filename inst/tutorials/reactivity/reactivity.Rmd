@@ -2,7 +2,7 @@
 title: "Chapters 8 & 9: Reactivity in Shiny"
 tutorial:
   id: "au.edu.unsw.cbdrh.hdat9800.chapter8.reactivity"
-  version: 1.1
+  version: 1.2
 output:
   learnr::tutorial:
     progressive: true
@@ -242,7 +242,7 @@ The stats displayed will be about a different sample to the one displayed in the
 fluidPage(
   p(sliderInput("rnorm1.num", "Sample size", value=100, min=100, max=1000, step=100)),
   p(plotOutput("rnorm1.hist")),
-  p(textOutput("rnorm1.summary"))
+  p(verbatimTextOutput("rnorm1.summary"))
 )
 ```
 </div>
@@ -307,23 +307,23 @@ Try it now:
 fluidPage(
   p(sliderInput("rnorm2.num", "Sample size", value=100, min=100, max=1000, step=100)),
   p(plotOutput("rnorm2.hist")),
-  p(textOutput("rnorm2.summary"))
+  p(verbatimTextOutput("rnorm2.summary"))
 )
 ```
 </div>
 
 ```{r rnorm2-server, context="server"}
 
-data <- reactive({
+random_data <- reactive({
   rnorm(input$rnorm2.num)
 })
 
 output$rnorm2.hist <- renderPlot({
-  hist(data())
+  hist(random_data())
 })
 
 output$rnorm2.summary <- renderPrint({
-  summary(data())
+  summary(random_data())
 })
 ```
 

@@ -149,16 +149,17 @@ statistical tests, fitting models or visualising the results. Once a data object
 examine its complete structure with the `str()` function, or view the names of its components with
 the `names()` function.
 
-`HairEyeColor` from the inbuilt `datsets` package contains data for a survey of individuals, recording hair color, eye color, and gender of 592 individuals.  It is stored in cross tablulated (table) form. Thus
+`HairEyeColor` from the inbuilt `datasets` package contains data for a survey of individuals, recording hair color, eye color, and gender of 592 individuals.  It is stored in cross tablulated (table) form. Thus
 
-```{r hec, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r hec, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 HairEyeColor
 
 ```
 
 A little more exploration
 
-```{r hec-explore, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r hec-explore, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
+class(HairEyeColor)
 str(HairEyeColor)
 sum(HairEyeColor) # number of cases
 sapply(dimnames(HairEyeColor), length) # table dimension sizes
@@ -170,7 +171,7 @@ sapply(dimnames(HairEyeColor), length) # table dimension sizes
 
 Use `expand.dft()` from `vcd` package to transform to raw (unit record) data format
 
-```{r hec-expand, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r hec-expand, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 raw_hec <- expand.dft(HairEyeColor)
 head(raw_hec)
 
@@ -262,7 +263,7 @@ explanatory factors, `Treatment` and `Sex`. `Age` is a numeric covariate, and `I
 response, an ordered factor, with levels None \< Some \< Marked. Excluding `ID` and `Age`, we would
 have a 2 × 2 × 3 contingency table for `Treatment`, `Sex` and `Improved`.
 
-```{r case-form, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%", warning=FALSE, message=FALSE}
+```{r case-form, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%", warning=FALSE, message=FALSE}
 names(Arthritis)
 str(Arthritis)
 head(Arthritis,5)
@@ -278,7 +279,7 @@ a data frame containing one or more factors, and a frequency variable, often
 called `Freq` or `count` or `n`. The total number of observations is `sum(X$Freq)`, `sum(X[,"Freq"])`
 or some equivalent form. The number of cells in the table is `nrow(X)`.
 
-```{r freq-form, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r freq-form, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 arthritis_agg <- Arthritis %>% count(across(names(Arthritis)))
 head(arthritis_agg)
 
@@ -286,7 +287,7 @@ head(arthritis_agg)
 
 Or dropping `ID` and `Age`
 
-```{r freq-drop, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r freq-drop, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 arthritis_drop <- count(Arthritis, Treatment, Sex, Improved)
 head(arthritis_drop)
 
@@ -353,14 +354,14 @@ Imagine that the Arthritis data was read from a text file. A suitable .txt file 
 
 > arthritis_txt <- read.delim("Chapter-7-categorical/extdata/arthritis.txt")
 
-```{r txt-ordered, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r txt-ordered, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 str(arthritis_txt)
 
 ```
 
 By default the `Improved` will be ordered alphabetically i.e. Marked, None, Some, or not at all. This is not what we want. In this case, the function ordered() (and others) can be useful.
 
-```{r ordered, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r ordered, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 levels(arthritis_txt$Improved)
 
 arthritis_txt$Improved <- ordered(arthritis_txt$Improved, levels=c("None", "Some", "Marked"))
@@ -371,7 +372,7 @@ levels(arthritis_txt$Improved)
 With this order of `Improved`, the response in this data, a mosaic display of `Treatment` and
 `Improved` shows a clearly interpretable pattern.
 
-```{r mosiac-arthritis, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r mosiac-arthritis, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 arthritis_txt$Improved <- ordered(arthritis_txt$Improved, levels=c("None", "Some", "Marked"))
 mosaic(~Treatment + Improved, data = arthritis_txt, gp = shading_max, 
        split_vertical = TRUE, main="Arthritis: [Treatment] [Improved]")
@@ -383,7 +384,7 @@ the dimensions of an n-way table, or change the labels for the variables or leve
 when the data are in table form. `aperm()` permutes the dimensions, and assigning to names and
 dimnames changes variable names and level labels respectively.
 
-```{r aperm-arthritis, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r aperm-arthritis, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 ftable(HairEyeColor)
 
 hec_mod <- aperm(HairEyeColor, c(3, 1, 2))
@@ -402,7 +403,7 @@ ftable(hec_mod)
 You can generate frequency tables from factor variables using the `table()` function, tables of
 proportions using the `prop.table()` function, and marginal frequencies using `margin.table()`.
 
-```{r freq-table, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%", warning=FALSE, message=FALSE}
+```{r freq-table, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%", warning=FALSE, message=FALSE}
 set.seed(1010)
 n=500
 A <- factor(sample(c("a1","a2"), n, rep=TRUE))
@@ -450,7 +451,7 @@ ftable(mytable)
 table option `exclude=NULL` if the variable is a vector. If the variable is a factor you have to create
 a new factor using
 
-```{r, eval=FALSE, echo=TRUE)
+```{r, eval=FALSE, echo=TRUE}
 newfactor <- factor(oldfactor, exclude=NULL).
 ```
 
@@ -481,7 +482,7 @@ summary(mytable) # chi-square test of indepedence
 If a variable is included on the left side of the formula, it is assumed to be a vector of frequencies
 (useful if the data have already been tabulated in frequency form).
 
-```{r xtabs-formula, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r xtabs-formula, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 head(GSS)
 (GSStab <- xtabs(count ~ sex + party, data=GSS))
 
@@ -504,13 +505,13 @@ For 3-way and larger tables, the structable() function in `vcd` provides a conve
 tabular display. The variables assigned to the rows and columns of a two-way display can be
 specified by a model formula.
 
-```{r struct-table, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r struct-table, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 structable(HairEyeColor) # show the table: default
 
 ```
 
 
-```{r struct-colrows, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r struct-colrows, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 structable(Hair+Sex ~ Eye, HairEyeColor) # specify col ~ row variables
 
 ```
@@ -518,7 +519,7 @@ structable(Hair+Sex ~ Eye, HairEyeColor) # specify col ~ row variables
 
 It also returns an object of class `structable` which may be plotted with `mosaic()`
 
-```{r struct-mosiac, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r struct-mosiac, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 HSE <- structable(Hair+Sex ~ Eye, HairEyeColor) # save structable object
 mosaic(HSE) # plot it
 
@@ -547,7 +548,7 @@ The data frame `DaytonSurvey` in the `vcdExtra` package represents a table givin
 the frequencies of reported use (`ever used?`) of alcohol, cigarettes and marijuana in a sample of
 high school seniors, also classified by sex and race.
 
-```{r dayton, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r dayton, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 str(DaytonSurvey)
 head(DaytonSurvey)
 
@@ -558,7 +559,7 @@ To focus on the associations among the substances, we want to collapse over `sex
 right hand side of the formula used in the call to `aggregate()` gives the factors to be retained in
 the new frequency data frame, `Dayton_ACM_df`.
 
-```{r dayton-aggregate, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r dayton-aggregate, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 # data in frequency form
 # collapse over sex and race
 Dayton_ACM_df <- aggregate(Freq ~ cigarette + alcohol + marijuana, data = DaytonSurvey, FUN = sum)
@@ -575,7 +576,7 @@ can be used in a similar way to sum the table over dimensions not mentioned in t
 To illustrate, we first convert the DaytonSurvey to a 5-way table using `xtabs()`,
 giving `Dayton_tab`.
 
-```{r xtabs-structable, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r xtabs-structable, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 # in table form
 Dayton_tab <- xtabs(Freq ~ cigarette + alcohol + marijuana + sex+race, data = DaytonSurvey)
 structable(cigarette + alcohol + marijuana ~ sex + race, data = Dayton_tab)
@@ -615,7 +616,7 @@ for this purpose.
 Create a 3-way table, and collapse Age from 10 year to 20 year intervals. First, we
 generate a 2 × 6 × 3 table of random counts from a Poisson distribution with mean of 100.
 
-```{r collapse-levels, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r collapse-levels, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 # create some sample data in frequency form
 sex <- c("Male", "Female")
 age <- c("10-19", "20-29", "30-39", "40-49", "50-59", "60-69")
@@ -691,7 +692,7 @@ Convert the Arthritis data in case form to a 3-way table of Treatment × Sex ×
 Improved. Note the use of `with()` to avoid having to use `Arthritis$Treatment` etc. within the
 call to `table()`.
 
-```{r arthritis-3way, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r arthritis-3way, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 Art_tab <- with(Arthritis, table(Treatment, Sex, Improved))
 str(Art_tab)
 
@@ -726,7 +727,7 @@ Art_df
 The UCBAdmissions data serves as an example of a 2 × 2 × 6 table, with Dept as the stratifying
 variable.
 
-```{r ucb, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r ucb, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 UCB <- aperm(UCBAdmissions, c(2, 1, 3))
 dimnames(UCB)[[2]] <- c("Yes", "No")
 names(dimnames(UCB)) <- c("Sex", "Admit?", "Department")
@@ -735,20 +736,20 @@ ftable(UCB)
 ```
 
 
-```{r ucb-odds, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r ucb-odds, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 oddsratio(UCBAdmissions, log=FALSE)
 
 ```
 
 
-```{r ucb-odds2, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r ucb-odds2, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 lor <- oddsratio(UCBAdmissions) # capture log odds ratios
 summary(lor)
 
 ```
 
 
-```{r ucb-woolf, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r ucb-woolf, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 woolf_test(UCBAdmissions)
 
 ```
@@ -781,7 +782,7 @@ associations in contingency tables, similar to trellis like plots produced by `c
 graphics. The panel argument supplies a function used to render each conditional subtable. The
 following gives a display similar to the fourfold example.
 
-```{r cot, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r cot, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 UCB <- aperm(UCBAdmissions, c(2, 1, 3))
 cotabplot(UCB, panel = cotab_fourfold)
 
@@ -791,7 +792,7 @@ cotabplot(UCB, panel = cotab_fourfold)
 
 ## Odds ratios
 
-There is a `plot()` method for oddsratio objects. By default, it shows the 95%
+There is a `plot()` method for `oddsratio` objects. By default, it shows the 95%
 confidence interval for the log odds ratio.
 
 ```{r odds-setup, include=FALSE, echo=FALSE, message=FALSE, warning=FALSE}
@@ -816,7 +817,7 @@ to several factors, an alternative visualisation is a `doubledecker()` plot. Thi
 highlighted conditional probabilities do not align. The excess of females admitted in Dept A stands
 out here.
 
-```{r doubledeck, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r doubledeck, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 doubledecker(Admit ~ Dept + Gender, data = UCBAdmissions[2:1,,])
 
 ```
@@ -844,7 +845,7 @@ table, change the names of the table variables, and relabel the levels of one of
 The code below changes the actual table for plotting purposes, but we pointed out that these
 changes can create other problems in analysis.
 
-```{r mosiac-labels, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r mosiac-labels, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 UCB <- aperm(UCBAdmissions, c(2, 1, 3))
 names(dimnames(UCB)) <- c("Sex", "Admit?", "Department")
 dimnames(UCB)[[2]] <- c("Yes", "No")
@@ -855,7 +856,7 @@ dimnames(UCB)[[2]] <- c("Yes", "No")
 The same effects can be achieved without modifying the data using the `set_varnames` and
 `set_labels` options in `mosaic()` as follows
 
-```{r labels-mod, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r labels-mod, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 vnames <- list(set_varnames = c(Admit="Admission", Gender="Sex", Dept="Department"))
 lnames <- list(Admit = c("Yes", "No"),
 Gender = c("Males", "Females"),
@@ -880,7 +881,7 @@ via `vignette("strucplot", package="vcd")`.
 
 Let us look at the association between `Treatment` and `Improved` via the following call following call to `mosaic()`
 
-```{r mosiac-max, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r mosiac-max, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 mosaic(~Treatment + Improved, data = Arthritis, gp = shading_max, 
        split_vertical = TRUE, main="Arthritis: [Treatment] [Improved]")
 
@@ -890,7 +891,7 @@ mosaic(~Treatment + Improved, data = Arthritis, gp = shading_max,
 Note that the residuals for the independence model were not large (as shown in the legend), yet the
 association between `Treatment` and `Improved` is highly significant. In contrast, one of the other shading schemes, from Friendly (1994), use `gp = shading_Friendly`, uses fixed cutoffs of ±2, ±4, to shade cells which are individually significant at approximately α = 0.05 and α = 0.001 levels, respectively
 
-```{r mosiac-friendly, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r mosiac-friendly, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 mosaic(~Treatment + Improved, data = Arthritis, gp = shading_Friendly, 
        split_vertical = TRUE, main="Arthritis: [Treatment] [Improved]")
 
@@ -918,14 +919,14 @@ variable x (a numeric variable or a factor). The range of a numeric variablex is
 based on the breaks argument, and stacked bars are drawn to show the distribution of y as x varies.
 As shown below, the discrete table that is visualised is returned by the function.
 
-```{r spine, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r spine, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 (spine(Improved ~ Age, data = Arthritis, breaks = 3))
 
 ```
 
 Switching the `breaks` option
 
-```{r spine-scott, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r spine-scott, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 (spine(Improved ~ Age, data = Arthritis, breaks = "Scott"))
 
 ```
@@ -933,7 +934,7 @@ Switching the `breaks` option
 
 The conditional density plot (Hofmann and Theus 2005) is a further generalisation. This visualisation technique is similar to spinograms, but uses a smoothing approach rather than discretising the explanatory variable. As well, it uses the original x axis and not a distorted one.
 
-```{r cdplot-vcd, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r cdplot-vcd, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 cd_plot(Improved ~ Age, data = Arthritis)
 
 ```
@@ -943,7 +944,7 @@ e.g. with a `rug()` plot.
 
 `cd_plot()` is from the `vcd` package.  Similar results can be obtained by using `cdplot()` from the `graphics` package.  `cdplot()` also allows us to add a rug plot, thus
 
-```{r cdplot-rug, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r cdplot-rug, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 cdplot(Improved ~ Age, data = Arthritis)
 with(Arthritis, rug(jitter(Age), col="white", quiet=TRUE))
 
@@ -964,7 +965,7 @@ table with the same row and column categories (Cohen 1960). Normal theory z-test
 by dividing κ by its asymptotic standard error (ASE). A `confint()` method for Kappa objects
 provides confidence intervals.
 
-```{r kappa, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r kappa, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 (K <- Kappa(SexualFun))
 
 ```
@@ -984,7 +985,7 @@ SexualFun data is generated below. The Bangdiwala measures represent the proport
 of the shaded areas of the diagonal rectangles, using weights w1 for exact agreement, and w2 for
 partial agreement one step from the main diagonal.
 
-```{r agree-plot, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r agree-plot, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 agree <- agreementplot(SexualFun, main="Is sex fun?")
 unlist(agree)
 
@@ -1011,7 +1012,7 @@ For a large multivariate categorical data, you need specialised statistical tech
 
 Demo data set, `HairEyeColor`, distribution of hair and eye color and sex in 592 statistics students
 
-```{r hair-eye, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r hair-eye, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 data(HairEyeColor)
 df <- as.data.frame(HairEyeColor)
 head(df)
@@ -1044,7 +1045,7 @@ ggplot(df, aes(x = Hair, y = Freq))+
 
 Visualise a grouped frequency table. Create a multi panel plot by `Sex`
 
-```{r balloon, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r balloon, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 df <- as.data.frame(HairEyeColor)
 ggballoonplot(df, x = "Hair", y = "Eye", size = "Freq",
               fill = "Freq", facet.by = "Sex",
@@ -1062,7 +1063,7 @@ Mosaic graph can be created using either the function `mosaicplot()` (in `graphi
 
 Example of mosaic plot
 
-```{r hair-mosiac, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r hair-mosiac, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 mosaic(HairEyeColor, shade = TRUE, legend = TRUE)
 
 ```
@@ -1074,7 +1075,7 @@ Correspondence analysis can be used to summarise and visualise the information c
 
 Required package `FactoMineR` for the analysis and `factoextra` for the visualisation
 
-```{r correspondence, echo=TRUE, exercise=TRUE, exercise.setup="", fig.width=8, fig.height=8, output.width="90%"}
+```{r correspondence, echo=TRUE, exercise=TRUE, fig.width=8, fig.height=8, output.width="90%"}
 res_ca <- CA(housetasks, graph = FALSE)
 fviz_ca_biplot(res_ca, repel = TRUE)
 
